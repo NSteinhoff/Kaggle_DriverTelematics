@@ -137,4 +137,4 @@ def get_trip_summaries(driver=1, trip=1, all = False):
 
 
 if __name__ == "__main__":
-    get_trip_summaries(driver=1, all=True)
+    print("Running as __main__")
