@@ -30,18 +30,6 @@ def get_trips(driver, data_directory=None):
     return trips
 
 
-def get_all_filenames(drivers, data_directory=None):
-    if not data_directory:
-        data_directory = _data_directory
-
-    filenames_by_drivers = {}
-    for driver in drivers:
-        trips = get_trips(driver, data_directory)
-        filenames_by_drivers[driver] = trips
-
-    return filenames_by_drivers
-
-
 def load_trip_data(driver, trip, data_directory=None):
     if not data_directory:
         data_directory = _data_directory
