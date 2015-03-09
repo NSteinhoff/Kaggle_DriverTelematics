@@ -5,7 +5,11 @@ import os
 
 
 # Global vars:
-_data_directory = '/Users/nikosteinhoff/Data/Kaggle/AxaDriverTelematics'
+_data_directories = ['/Users/nikosteinhoff/Data/Kaggle/AxaDriverTelematics', '/home/nikosteinhoff/Data/Kaggle/AxaDriverTelematics']
+for dir in _data_directories:
+    if os.path.isdir(dir):
+        _data_directory = dir
+print(_data_directory)
 
 
 def get_drivers(data_directory=None):
@@ -41,19 +45,16 @@ def load_trip_data(driver, trip, data_directory=None):
     return data
 
 
-def write_submission_file(data_directory=None):
+def write_to_submission_file(line, overwrite=False, data_directory=None):
     if not data_directory:
         data_directory = _data_directory
 
     file_path = os.path.join(data_directory, 'submission_file.csv')
 
-    drivers = get_drivers()
-    trips = range(1, 201)
-    prob = 1
+    if overwrite:
+        mode = 'w'
+    else:
+        mode = 'a'
 
-    with open(file_path, 'w') as file:
-        file.write('driver_trip,prob\n')
-
-        for driver in drivers:
-            for trip in trips:
-                file.write('{0}_{1},{2}\n'.format(driver, trip, prob))
+    with open(file_path, mode) as file:
+        file.write(line)

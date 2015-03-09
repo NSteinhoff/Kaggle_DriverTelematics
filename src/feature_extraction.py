@@ -43,7 +43,7 @@ def build_driver_data(driver, sample_size=None):
     return driver_data
 
 
-def build_reference_data(n_drivers=200, n_trips=1, exclude=None):
+def build_reference_data(n_drivers=100, n_trips=1, exclude=None):
     drivers = [f for f in file_handling.get_drivers() if f is not exclude]
     drivers_sample = random.sample(drivers, n_drivers)
 
@@ -63,13 +63,18 @@ def extract_trip_features(driver, trip):
     trip_data = file_handling.load_trip_data(driver, trip)
     transformed_data = transform_data(trip_data)
 
-    col_percentiles = np.percentile(transformed_data[:, 4:], range(25, 100, 25), axis=0)
+    # Duration
+    duration = transformed_data.shape[0]
 
-    # TODO All the data transformation stuff here
+    # Length
+    length = transformed_data[:, 4].sum()
+
+    # Percentiles as distribution profile
+    col_percentiles = np.percentile(transformed_data[:, 4:], range(10, 100, 10), axis=0)
 
     # A single row of features per trip
     trip_number = int(trip[:-4])
-    features = np.hstack((np.array(trip_number), col_percentiles.ravel('F')))
+    features = np.hstack((np.array(trip_number), col_percentiles.ravel('F'), duration, length))
 
     return features
 
@@ -90,15 +95,15 @@ def transform_data(raw_data):
     ix_x_change = 2
     ix_y_change = 3
 
-    # Speed
-    speed = calculate_speed(temp_data, ix_x_change, ix_y_change)
-    temp_data = np.column_stack((temp_data, speed))
-    ix_speed = 4
+    # Velocity
+    velocity = calculate_speed(temp_data, ix_x_change, ix_y_change)
+    temp_data = np.column_stack((temp_data, velocity))
+    ix_velocity = 4
 
     # Acceleration
     acceleration = [0]
     for i in range(1, temp_data.shape[0]):
-        acceleration.append(temp_data[i, ix_speed] - temp_data[i-1, ix_speed])
+        acceleration.append(temp_data[i, ix_velocity] - temp_data[i-1, ix_velocity])
     temp_data = np.column_stack((temp_data, acceleration))
     ix_acceleration = 5
 
