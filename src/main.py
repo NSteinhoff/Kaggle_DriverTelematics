@@ -5,6 +5,7 @@ import numpy as np
 import src.file_handling as file_handling
 import src.feature_extraction as feature_extraction
 import src.classification_model as classification_model
+import time
 
 
 def main(test=False):
@@ -19,9 +20,11 @@ def main(test=False):
     calibration = np.linspace(0, 100, 200)
 
     count = 0
+    start_time = time.time()
     for driver in drivers:
         count += 1
         print("Calculating {0}/{1}".format(count, len(drivers)))
+
         data = feature_extraction.build_data_set(driver)
         print(data)
 
@@ -34,8 +37,19 @@ def main(test=False):
         print(calibrated_probabilities)
 
         for element in calibrated_probabilities:
-            file_handling.write_to_submission_file("{0}_{1},{2}\n".format(driver, element[0], element[2]))
+            file_handling.write_to_submission_file("{0}_{1},{2:.6f}\n".format(driver, element[0], element[2]))
 
+        elapsed_time = time.time() - start_time
+        time_per_driver = elapsed_time / count
+        total_time_estimate = time_per_driver * len(drivers)
+        finish_time = start_time + total_time_estimate
+
+        print("+-----------------+")
+        print("Finished driver {0}/{1}".format(count, len(drivers)))
+        print("Started at: {0}".format(time.ctime(start_time)))
+        print("Seconds per driver: {0:.2f}".format(time_per_driver))
+        print("Done at: {0}".format(time.ctime(finish_time)))
+        print("+-----------------+")
 
 
 
