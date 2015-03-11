@@ -3,10 +3,29 @@ __author__ = 'nikosteinhoff'
 import numpy as np
 from scipy import signal
 from src import file_handling
+from src import classification_model
 import random
 import matplotlib.pyplot as plt
 from multiprocessing import Process, Pipe
 import time
+
+
+def calculate_driver(driver, mp=False):
+    print("Calculating driver {0}".format(driver))
+
+    data = build_data_set(driver, mp=mp)
+
+    probabilities = classification_model.classify_data(data)
+
+    sorted_probabilities = probabilities[probabilities[:, 1].argsort()]
+
+    calibration = np.linspace(0, 100, 200)
+    calibrated_probabilities = np.column_stack((sorted_probabilities, calibration))
+
+    sorted_calibrated_probabilities = calibrated_probabilities[calibrated_probabilities[:, 0].argsort()]
+
+    driver_results = np.column_stack((np.ones((sorted_calibrated_probabilities.shape[0], 1))*driver, sorted_calibrated_probabilities))
+    return driver_results
 
 
 def build_data_set(driver, mp=False):
@@ -35,9 +54,9 @@ def build_data_set(driver, mp=False):
     driver_data = np.column_stack((np.ones((driver_data.shape[0], 1), dtype=float), driver_data))  # Add label
     ref_data = np.column_stack((np.zeros((ref_data.shape[0], 1), dtype=float), ref_data))  # Add label
 
-    print("Complete data set for driver {0}".format(driver))
+
     complete_data = np.vstack((driver_data, ref_data))
-    print("N = {0}".format(complete_data.shape))
+    print("Complete data set for driver {0} --->> {1}".format(driver, complete_data.shape))
 
     return complete_data
 

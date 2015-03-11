@@ -57,7 +57,7 @@ def write_to_submission_file(line, overwrite=False, data_directory=None):
         mode = 'a'
 
     with open(file_path, mode) as file:
-        file.write(line)
+        file.write(line+'\n')
 
 
 if __name__ == '__main__':

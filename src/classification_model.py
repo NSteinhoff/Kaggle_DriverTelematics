@@ -1,14 +1,12 @@
 __author__ = 'nikosteinhoff'
 
 import numpy as np
-from src import feature_extraction
 from sklearn import preprocessing
 from sklearn.linear_model import logistic
 from sklearn import neighbors
 from sklearn import cross_validation
 from sklearn import metrics
 from sklearn import tree
-from sklearn import svm
 
 
 def classify_data(data):
@@ -61,16 +59,7 @@ def split_data_target_id(data):
     return X, y, trip_id
 
 
-def fit_model(X, y, model):
-    fit = model.fit(X, y)
-
-
 def pick_best_model(model_scores):
     keys = list(model_scores.keys())
     values = list(model_scores.values())
     return keys[values.index(max(values))]
-
-if __name__ == '__main__':
-    test_data = feature_extraction.build_data_set(1, mp=True)
-    results = classify_data(test_data)
-    print("Done!")
