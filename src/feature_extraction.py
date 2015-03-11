@@ -1,26 +1,52 @@
 __author__ = 'nikosteinhoff'
 
 import numpy as np
-import src.file_handling as file_handling
+from scipy import signal
+from src import file_handling
 import random
+import matplotlib.pyplot as plt
+from multiprocessing import Process, Pipe
+import time
 
-random.seed(123456)
 
+def build_data_set(driver, mp=False):
+    if mp:
+        # Open pipes
+        receiver_driver_data, sender_driver_data = Pipe(duplex=False)
+        receiver_ref_data, sender_ref_data = Pipe(duplex=False)
 
-def build_data_set(driver):
-    driver_data = build_driver_data(driver)
+        # Start processes
+        p_driver_data = Process(target=piped_process, args=(sender_driver_data, build_driver_data, driver))
+        p_ref_data = Process(target=piped_process, args=(sender_ref_data, build_reference_data, 200, 1, driver))
+        p_driver_data.start()
+        p_ref_data.start()
+
+        # Retrieve data from pipes
+        driver_data = receiver_driver_data.recv()
+        ref_data = receiver_ref_data.recv()
+
+        # Exit processes
+        p_driver_data.join()
+        p_ref_data.join()
+    else:
+        driver_data = build_driver_data(driver)
+        ref_data = build_reference_data(200, 1, exclude=driver)
+
     driver_data = np.column_stack((np.ones((driver_data.shape[0], 1), dtype=float), driver_data))  # Add label
-    print("driver_data shape = {0}".format(driver_data.shape))
-
-    ref_data = build_reference_data(exclude=driver)
     ref_data = np.column_stack((np.zeros((ref_data.shape[0], 1), dtype=float), ref_data))  # Add label
-    print("ref_data shape = {0}".format(ref_data.shape))
 
     print("Complete data set for driver {0}".format(driver))
     complete_data = np.vstack((driver_data, ref_data))
-    print(complete_data.shape)
+    print("N = {0}".format(complete_data.shape))
 
     return complete_data
+
+
+def piped_process(pipe, function, *args):
+    return_value = function(*args)
+
+    pipe.send(return_value)
+    pipe.close()
 
 
 def build_driver_data(driver, sample_size=None):
@@ -43,8 +69,9 @@ def build_driver_data(driver, sample_size=None):
     return driver_data
 
 
-def build_reference_data(n_drivers=100, n_trips=1, exclude=None):
+def build_reference_data(n_drivers=200, n_trips=1, exclude=None):
     drivers = [f for f in file_handling.get_drivers() if f is not exclude]
+    random.seed(123456)
     drivers_sample = random.sample(drivers, n_drivers)
 
     reference_data = np.zeros((1, 1), dtype=float)
@@ -69,17 +96,23 @@ def extract_trip_features(driver, trip):
     # Length
     length = transformed_data[:, 4].sum()
 
-    # Percentiles as distribution profile
-    col_percentiles = np.percentile(transformed_data[:, 4:], range(10, 100, 10), axis=0)
+    # Means
+    col_means = transformed_data[:, 4:].mean(axis=0)
+
+    # Standard deviations
+    col_std = transformed_data[:, 4:].std(axis=0)
+
+    # Interquartile ranges
+    col_quartiles = np.percentile(transformed_data[:, 4:], [25, 75], axis=0)
+    col_IQR = col_quartiles[1] - col_quartiles[0]
 
     # A single row of features per trip
-    trip_number = int(trip[:-4])
-    features = np.hstack((np.array(trip_number), col_percentiles.ravel('F'), duration, length))
+    features = np.hstack((trip, duration, length, col_means, col_std, col_IQR))
 
     return features
 
 
-def transform_data(raw_data):
+def transform_data(raw_data, plot=False):
     temp_data = np.copy(raw_data)
     ix_x = 0
     ix_y = 1
@@ -91,7 +124,29 @@ def transform_data(raw_data):
         x_change.append(temp_data[i, ix_x] - temp_data[i-1, ix_x])
         y_change.append(temp_data[i, ix_y] - temp_data[i-1, ix_y])
 
-    temp_data = np.column_stack((temp_data, x_change, y_change))
+    # Removing spikes and smoothing
+    x_change_no_spikes = signal.medfilt(x_change)
+    y_change_no_spikes = signal.medfilt(y_change)
+
+    convolve_N = 3
+    convolve_array = np.ones((convolve_N, ))/convolve_N
+    x_change_smooth = signal.convolve(x_change_no_spikes, convolve_array, mode='same')
+    y_change_smooth = signal.convolve(y_change_no_spikes, convolve_array, mode='same')
+
+    if plot:
+        period = range(len(x_change))
+        plt.figure(1)
+        plt.subplot(2, 1, 1)
+        plt.plot(period, x_change, 'r-', period, x_change_smooth, 'g-')
+        plt.ylabel("x_change")
+
+        plt.subplot(2, 1, 2)
+        plt.plot(period, y_change, 'r-', period, y_change_smooth, 'g-')
+        plt.ylabel("y_change")
+
+        plt.show()
+
+    temp_data = np.column_stack((temp_data, x_change_smooth, y_change_smooth))
     ix_x_change = 2
     ix_y_change = 3
 
@@ -145,11 +200,6 @@ def calculation_direction_change(data, index_1, index_2):
     return directional_changes
 
 
-def unit_vector(vector):
-    """ Returns the unit vector of the vector.  """
-    return vector / np.linalg.norm(vector)
-
-
 def radiants_between(v1, v2):
     """ Returns the angle in radians between vectors 'v1' and 'v2'::
 
@@ -170,9 +220,14 @@ def radiants_between(v1, v2):
     return angle
 
 
-if __name__ == '__main__':
-    print("Running as main")
-    data = build_data_set('1')
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
 
-    np.set_printoptions(suppress=True, precision=2)
-    print(data)
+
+if __name__ == '__main__':
+    start_time = time.time()
+    test_data = build_data_set(1, mp=True)
+    print(test_data.shape)
+    print("Elapsed = {0:.2f}".format(time.time() - start_time))
+    print("done!")

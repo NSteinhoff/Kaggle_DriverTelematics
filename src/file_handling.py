@@ -16,9 +16,9 @@ def get_drivers(data_directory=None):
     if not data_directory:
         data_directory = os.path.join(_data_directory, 'drivers')
 
-    drivers = [f for f in os.listdir(data_directory) if os.path.isdir(os.path.join(data_directory, f))]
+    drivers = [int(f) for f in os.listdir(data_directory) if os.path.isdir(os.path.join(data_directory, f))]
 
-    return drivers
+    return sorted(drivers)
 
 
 def get_trips(driver, data_directory=None):
@@ -27,18 +27,18 @@ def get_trips(driver, data_directory=None):
 
     trip_directory = os.path.join(data_directory, str(driver))
 
-    trips = [f for f in os.listdir(trip_directory)
+    trips = [int(f[:-4]) for f in os.listdir(trip_directory)
              if os.path.isfile(os.path.join(trip_directory, f))
              and f.endswith('.csv')]
 
-    return trips
+    return sorted(trips)
 
 
 def load_trip_data(driver, trip, data_directory=None):
     if not data_directory:
         data_directory = os.path.join(_data_directory, 'drivers')
 
-    path = os.path.join(data_directory, driver, trip)
+    path = os.path.join(data_directory, str(driver), '{0}.csv'.format(trip))
 
     data = np.genfromtxt(path, skip_header=1, delimiter=',')
 
@@ -58,3 +58,9 @@ def write_to_submission_file(line, overwrite=False, data_directory=None):
 
     with open(file_path, mode) as file:
         file.write(line)
+
+
+if __name__ == '__main__':
+    drivers = get_drivers()
+    trips = get_trips(1)
+    trip_data = load_trip_data(1, 1)

@@ -25,19 +25,21 @@ def main(test=False):
         count += 1
         print("Calculating {0}/{1}".format(count, len(drivers)))
 
-        data = feature_extraction.build_data_set(driver)
+        data = feature_extraction.build_data_set(driver, mp=True)
         print(data)
 
         probabilities = classification_model.classify_data(data)
 
-        sorted_probablities = probabilities[probabilities[:, 1].argsort()]
+        sorted_probabilities = probabilities[probabilities[:, 1].argsort()]
 
-        calibrated_probabilities = np.column_stack((sorted_probablities, calibration))
+        calibrated_probabilities = np.column_stack((sorted_probabilities, calibration))
 
-        print(calibrated_probabilities)
+        sorted_calibrated_probabilities = calibrated_probabilities[calibrated_probabilities[:, 0].argsort()]
 
-        for element in calibrated_probabilities:
-            file_handling.write_to_submission_file("{0}_{1},{2:.6f}\n".format(driver, element[0], element[2]))
+        print(sorted_calibrated_probabilities)
+
+        for element in sorted_calibrated_probabilities:
+            file_handling.write_to_submission_file("{0}_{1},{2:.6f}\n".format(driver, int(element[0]), element[2]))
 
         elapsed_time = time.time() - start_time
         time_per_driver = elapsed_time / count
