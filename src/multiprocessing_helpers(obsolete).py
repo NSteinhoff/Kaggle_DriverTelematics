@@ -3,6 +3,7 @@ __author__ = 'nikosteinhoff'
 import multiprocessing
 from multiprocessing import Queue
 from multiprocessing import Process
+import queue
 
 
 class ProcessManager:
@@ -26,20 +27,31 @@ class ProcessManager:
         for process in self.processes:
             process.start()
 
+        print("processes done! waiting to join....")
+
         for process in self.processes:
             process.join()
             
 
     def run_function(self, function, in_queue, out_queue, *args):
 
-        while not in_queue.empty():
-            next_item = in_queue.get()
+        while True:
+            try:
+                next_item = in_queue.get(block=True, timeout=1)
 
-            return_value = function(next_item, *args)
+                return_value = function(next_item, *args)
 
-            out_queue.put(return_value)
+                try:
+                    out_queue.put(return_value, block=True, timeout=1)
+                except queue.Full:
+                    print("out_queue is full")
 
-        return True
+            except queue.Empty:
+                print("in_queue is empty")
+                break
+
+        print("run_function done!")
+        return
 
 def test_manager():
     values = range(10)
@@ -56,6 +68,7 @@ def test_manager():
 
 
 def dummy_function(x, y, z):
+    print(x, y, z)
     result = x * y + z
     return result
 

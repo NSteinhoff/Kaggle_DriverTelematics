@@ -2,6 +2,7 @@ __author__ = 'nikosteinhoff'
 
 import numpy as np
 import os
+import time
 
 
 # Global vars:
@@ -10,6 +11,7 @@ for dir in _data_directories:
     if os.path.isdir(dir):
         _data_directory = dir
 print(_data_directory)
+file_creation_time = time.time()
 
 
 def get_drivers(data_directory=None):
@@ -45,11 +47,14 @@ def load_trip_data(driver, trip, data_directory=None):
     return data
 
 
-def write_to_submission_file(line, overwrite=False, data_directory=None):
+def write_to_submission_file(line, overwrite=False, test=False, data_directory=None):
     if not data_directory:
         data_directory = _data_directory
 
-    file_path = os.path.join(data_directory, 'submission_file.csv')
+    if test:
+        file_path = os.path.join(data_directory, 'submission_file_test.csv')
+    else:
+        file_path = os.path.join(data_directory, 'submission_file_{0}.csv'.format(int(file_creation_time)))
 
     if overwrite:
         mode = 'w'
