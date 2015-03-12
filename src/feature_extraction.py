@@ -35,9 +35,8 @@ def build_data_set(driver, mp=False):
     driver_data = np.column_stack((np.ones((driver_data.shape[0], 1), dtype=float), driver_data))  # Add label
     ref_data = np.column_stack((np.zeros((ref_data.shape[0], 1), dtype=float), ref_data))  # Add label
 
-
     complete_data = np.vstack((driver_data, ref_data))
-    print("Complete data set for driver {0} --->> {1}".format(driver, complete_data.shape))
+    # print("Complete data set for driver {0} --->> {1}".format(driver, complete_data.shape))
 
     return complete_data
 
@@ -104,10 +103,10 @@ def extract_trip_features(driver, trip):
 
     # Interquartile ranges
     col_quartiles = np.percentile(transformed_data[:, 4:], [25, 75], axis=0)
-    col_IQR = col_quartiles[1] - col_quartiles[0]
+    col_iqr = col_quartiles[1] - col_quartiles[0]
 
     # A single row of features per trip
-    features = np.hstack((trip, duration, length, col_means, col_std, col_IQR))
+    features = np.hstack((trip, duration, length, col_means, col_std, col_iqr))
 
     return features
 
@@ -128,8 +127,8 @@ def transform_data(raw_data, plot=False):
     x_change_no_spikes = signal.medfilt(x_change)
     y_change_no_spikes = signal.medfilt(y_change)
 
-    convolve_N = 3
-    convolve_array = np.ones((convolve_N, ))/convolve_N
+    convolve_n = 3
+    convolve_array = np.ones((convolve_n, ))/convolve_n
     x_change_smooth = signal.convolve(x_change_no_spikes, convolve_array, mode='same')
     y_change_smooth = signal.convolve(y_change_no_spikes, convolve_array, mode='same')
 
@@ -193,14 +192,14 @@ def calculation_direction_change(data, index_1, index_2):
         current_vector = [data[i, index_1], data[i, index_2]]
         previous_vector = [data[i-1, index_1], data[i-1, index_2]]
 
-        radiants = radiants_between(current_vector, previous_vector)
+        radians = radians_between(current_vector, previous_vector)
 
-        directional_changes.append(radiants)
+        directional_changes.append(radians)
 
     return directional_changes
 
 
-def radiants_between(v1, v2):
+def radians_between(v1, v2):
     """ Returns the angle in radians between vectors 'v1' and 'v2'::
 
             angle_between((1, 0, 0), (0, 1, 0))

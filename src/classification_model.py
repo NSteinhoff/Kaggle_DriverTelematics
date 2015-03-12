@@ -25,13 +25,13 @@ def calculate_driver(driver, mp=False):
 
     sorted_calibrated_probabilities = calibrated_probabilities[calibrated_probabilities[:, 0].argsort()]
 
-    driver_results = np.column_stack((np.ones((sorted_calibrated_probabilities.shape[0], 1))*driver, sorted_calibrated_probabilities))
+    driver_results = np.column_stack((np.ones((sorted_calibrated_probabilities.shape[0], 1))*driver,
+                                      sorted_calibrated_probabilities))
     return driver_results
 
 
-
 def classify_data(data):
-    X, y, trip_id = split_data_target_id(data)
+    x, y, trip_id = split_data_target_id(data)
 
     # Model specifications
     models = {}
@@ -49,59 +49,57 @@ def classify_data(data):
     models['random_forest_10'] = ensemble.RandomForestClassifier(max_depth=10)
     models['random_forest_15'] = ensemble.RandomForestClassifier(max_depth=15)
 
-
-
     cv_scores = {}
     for name in models.keys():
         cv_scores[name] = []
 
     kf = cross_validation.StratifiedKFold(y, n_folds=5)
     for train_index, test_index in kf:
-        X_train, X_test = X[train_index], X[test_index]
+        x_train, x_test = x[train_index], x[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
-        # Preprocessing
-        scaler = preprocessing.StandardScaler().fit(X_train)
-        X_train = scaler.transform(X_train)
-        X_test = scaler.transform(X_test)
+        # Pre-processing
+        scale = preprocessing.StandardScaler().fit(x_train)
+        x_train = scale.transform(x_train)
+        x_test = scale.transform(x_test)
 
-        # Trainig
+        # Training
         fits = {}
         for name, model in models.items():
-            fits[name] = model.fit(X_train, y_train)
+            fits[name] = model.fit(x_train, y_train)
 
         # Evaluation
         for name, model in fits.items():
-            probs = model.predict_proba(X_test)[:, 1]
-            cv_scores[name].append(metrics.roc_auc_score(y_test, probs))
+            probabilities = model.predict_proba(x_test)[:, 1]
+            cv_scores[name].append(metrics.roc_auc_score(y_test, probabilities))
 
     avg_scores = {}
     for name in models.keys():
         avg_scores[name] = np.array(cv_scores[name]).mean()
 
-    # Final fit on complete dataset
+    # Final fit on complete data set
     best_name = pick_best_model(avg_scores)
-    final_scaler = preprocessing.StandardScaler().fit(X)
-    X_final = final_scaler.transform(X)
-    final_fit = models[best_name].fit(X_final, y)
+    final_scale = preprocessing.StandardScaler().fit(x)
+    x_final = final_scale.transform(x)
+    final_fit = models[best_name].fit(x_final, y)
 
     # Prediction
     original_cases = y == 1
-    X_pred = X[original_cases]
-    trip_id_pred = trip_id[original_cases]
-    X_pred = final_scaler.transform(X_pred)
+    x_predict = x[original_cases]
+    trip_id_predict = trip_id[original_cases]
+    x_predict = final_scale.transform(x_predict)
 
-    probabilities = final_fit.predict_proba(X_pred)[:, 1]
+    probabilities = final_fit.predict_proba(x_predict)[:, 1]
 
-    return np.column_stack((trip_id_pred, probabilities))
+    return np.column_stack((trip_id_predict, probabilities))
 
 
 def split_data_target_id(data):
-    X = data[:, 2:]
+    x = data[:, 2:]
     y = data[:, 0]
     trip_id = data[:, 1]
 
-    return X, y, trip_id
+    return x, y, trip_id
 
 
 def pick_best_model(model_scores):

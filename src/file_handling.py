@@ -4,13 +4,15 @@ import numpy as np
 import os
 import time
 
-
 # Global vars:
-_data_directories = ['/Users/nikosteinhoff/Data/Kaggle/AxaDriverTelematics', '/home/nikosteinhoff/Data/Kaggle/AxaDriverTelematics']
-for dir in _data_directories:
-    if os.path.isdir(dir):
-        _data_directory = dir
+_data_directories = ['/Users/nikosteinhoff/Data/Kaggle/AxaDriverTelematics',
+                     '/home/nikosteinhoff/Data/Kaggle/AxaDriverTelematics']
+_data_directory = ""
+for directory in _data_directories:
+    if os.path.isdir(directory):
+        _data_directory = directory
 print(_data_directory)
+
 file_creation_time = time.time()
 
 
