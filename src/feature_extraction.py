@@ -164,6 +164,13 @@ def transform_data(raw_data, plot=False):
     # Directional changes
     directional_changes = calculation_direction_change(temp_data, ix_x_change, ix_y_change)
     temp_data = np.column_stack((temp_data, directional_changes))
+    ix_direction_changes = 6
+
+    # Speed * directional changes
+    speed_times_turn = []
+    for row in temp_data:
+        speed_times_turn.append(row[ix_velocity] * row[ix_direction_changes])
+    temp_data = np.column_stack((temp_data, speed_times_turn))
 
     transformed_data = np.copy(temp_data)
 
