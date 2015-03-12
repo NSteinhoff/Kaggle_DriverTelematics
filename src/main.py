@@ -70,6 +70,22 @@ def plot_model_counts(model_counts):
     plt.show()
 
 
+def calculate_feature_importances(data):
+    all_importances = {}
+    for dict in data:
+        for name, value in dict.items():
+            if name in all_importances.keys():
+                all_importances[name].append(value)
+            else:
+                all_importances[name] = [value]
+
+    avg_importances = {}
+    for name, values in all_importances.items():
+        avg_importances[name] = np.array(values).mean()
+
+    return avg_importances
+
+
 def main(test=False):
     print("This is main()")
     start_time = time.time()
@@ -85,16 +101,23 @@ def main(test=False):
 
     models = []
     probability_results = []
-    for result, model in results:
+    feature_importances = []
+    for result, model, feature_importance in results:
         models.append(model)
         probability_results.append(result)
+        feature_importances.append(feature_importance)
 
     write_results_to_file(probability_results, test)
 
     model_counts = generate_model_frequencies(models, test)
     print("\nModel frequencies: +---------------------+")
     for model, count in model_counts.items():
-        print("{0:<30}    {1:>5}".format(model+':', count))
+        print("{0:<30}    {1:>10}".format(model+':', count))
+
+    overall_feature_importances = calculate_feature_importances(feature_importances)
+    print("\nFeature importances: +---------------------+")
+    for feature, importance in overall_feature_importances.items():
+        print("{0:<30}    {1:>10}".format(feature+':', '{0:.4f}'.format(importance)))
 
     total_time = time.time()-start_time
     print("\n+-----------------+")
@@ -105,4 +128,4 @@ def main(test=False):
 
 if __name__ == '__main__':
     np.set_printoptions(suppress=True, precision=2)
-    main(test=False)
+    main(test=True)

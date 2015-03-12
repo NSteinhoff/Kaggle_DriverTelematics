@@ -9,28 +9,9 @@ from multiprocessing import Process, Pipe
 import time
 
 
-def build_data_set(driver, mp=False):
-    if mp:
-        # Open pipes
-        receiver_driver_data, sender_driver_data = Pipe(duplex=False)
-        receiver_ref_data, sender_ref_data = Pipe(duplex=False)
-
-        # Start processes
-        p_driver_data = Process(target=piped_process, args=(sender_driver_data, build_driver_data, driver))
-        p_ref_data = Process(target=piped_process, args=(sender_ref_data, build_reference_data, 200, 1, driver))
-        p_driver_data.start()
-        p_ref_data.start()
-
-        # Retrieve data from pipes
-        driver_data = receiver_driver_data.recv()
-        ref_data = receiver_ref_data.recv()
-
-        # Exit processes
-        p_driver_data.join()
-        p_ref_data.join()
-    else:
-        driver_data = build_driver_data(driver)
-        ref_data = build_reference_data(200, 1, exclude=driver)
+def build_data_set(driver):
+    driver_data, descriptions = build_driver_data(driver)
+    ref_data = build_reference_data(200, 1, exclude=driver)
 
     driver_data = np.column_stack((np.ones((driver_data.shape[0], 1), dtype=float), driver_data))  # Add label
     ref_data = np.column_stack((np.zeros((ref_data.shape[0], 1), dtype=float), ref_data))  # Add label
@@ -38,7 +19,7 @@ def build_data_set(driver, mp=False):
     complete_data = np.vstack((driver_data, ref_data))
     # print("Complete data set for driver {0} --->> {1}".format(driver, complete_data.shape))
 
-    return complete_data
+    return complete_data, descriptions
 
 
 def piped_process(pipe, function, *args):
@@ -57,7 +38,7 @@ def build_driver_data(driver, sample_size=None):
     driver_data = np.zeros((1, 1), dtype=float)
     for trip in trips:
         # extract features
-        trip_features = extract_trip_features(driver, trip)
+        trip_features, descriptions = extract_trip_features(driver, trip)
 
         # append row to array
         if driver_data.size == 1:
@@ -65,7 +46,7 @@ def build_driver_data(driver, sample_size=None):
         else:
             driver_data = np.vstack((driver_data, trip_features))
 
-    return driver_data
+    return driver_data, descriptions
 
 
 def build_reference_data(n_drivers=200, n_trips=1, exclude=None):
@@ -75,7 +56,7 @@ def build_reference_data(n_drivers=200, n_trips=1, exclude=None):
 
     reference_data = np.zeros((1, 1), dtype=float)
     for driver in drivers_sample:
-        driver_data = build_driver_data(driver, n_trips)
+        driver_data, descriptions = build_driver_data(driver, n_trips)
 
         if reference_data.size == 1:
             reference_data = np.copy(driver_data)
@@ -108,8 +89,14 @@ def extract_trip_features(driver, trip):
 
     # A single row of features per trip
     features = np.hstack((trip, duration, length, col_means, col_std, col_iqr, col_med))
+    descriptions = ['duration', 'length', 
+                    'mean_velocity', 'mean_acceleration', 'mean_directional_change', 'mean_velocity*dir_change', 
+                    'std_velocity', 'std_acceleration', 'std_directional_change', 'std_velocity*dir_change', 
+                    'iqr_velocity', 'iqr_acceleration', 'iqr_directional_change', 'iqr_velocity*dir_change', 
+                    'median_velocity', 'median_acceleration', 'median_directional_change', 'median_velocity*dir_change'
+                    ]
 
-    return features
+    return features, descriptions
 
 
 def transform_data(raw_data, plot=False):
@@ -234,7 +221,7 @@ def unit_vector(vector):
 
 if __name__ == '__main__':
     start_time = time.time()
-    test_data = build_data_set(1, mp=True)
+    test_data, feature_descriptions = build_data_set(1)
     print(test_data.shape)
     print("Elapsed = {0:.2f}".format(time.time() - start_time))
     print("done!")

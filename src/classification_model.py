@@ -16,9 +16,9 @@ from sklearn import ensemble
 def calculate_driver(driver, mp=False):
     print("Calculating driver {0}".format(driver))
 
-    data = feature_extraction.build_data_set(driver, mp=mp)
+    data, descriptions = feature_extraction.build_data_set(driver)
 
-    probabilities, model = classify_data(data)
+    probabilities, model, feature_importance = classify_data(data, descriptions)
 
     sorted_probabilities = probabilities[probabilities[:, 1].argsort()]
 
@@ -29,23 +29,24 @@ def calculate_driver(driver, mp=False):
 
     driver_results = np.column_stack((np.ones((sorted_calibrated_probabilities.shape[0], 1))*driver,
                                       sorted_calibrated_probabilities))
-    return driver_results, model
+
+    return driver_results, model, feature_importance
 
 
-def classify_data(data):
+def classify_data(data, feature_descriptions):
     x, y, trip_id = split_data_target_id(data)
 
     # Model specifications
     models = {}
-    models['logistic'] = logistic.LogisticRegression()
-    models['logistic_no_intercept'] = logistic.LogisticRegression(fit_intercept=False)
+    # models['logistic'] = logistic.LogisticRegression()
+    # models['logistic_no_intercept'] = logistic.LogisticRegression(fit_intercept=False)
 
-    models['nearest_neighbors_unif_3'] = neighbors.KNeighborsClassifier(n_neighbors=3)
-    models['nearest_neighbors_unif_5'] = neighbors.KNeighborsClassifier()
-    models['nearest_neighbors_unif_7'] = neighbors.KNeighborsClassifier(n_neighbors=7)
-    models['nearest_neighbors_dist_3'] = neighbors.KNeighborsClassifier(n_neighbors=3, weights='distance')
-    models['nearest_neighbors_dist_5'] = neighbors.KNeighborsClassifier(weights='distance')
-    models['nearest_neighbors_dist_3'] = neighbors.KNeighborsClassifier(n_neighbors=7, weights='distance')
+    # models['nearest_neighbors_unif_3'] = neighbors.KNeighborsClassifier(n_neighbors=3)
+    # models['nearest_neighbors_unif_5'] = neighbors.KNeighborsClassifier()
+    # models['nearest_neighbors_unif_7'] = neighbors.KNeighborsClassifier(n_neighbors=7)
+    # models['nearest_neighbors_dist_3'] = neighbors.KNeighborsClassifier(n_neighbors=3, weights='distance')
+    # models['nearest_neighbors_dist_5'] = neighbors.KNeighborsClassifier(weights='distance')
+    # models['nearest_neighbors_dist_3'] = neighbors.KNeighborsClassifier(n_neighbors=7, weights='distance')
 
     models['tree_5'] = tree.DecisionTreeClassifier(max_depth=5)
     models['tree_7'] = tree.DecisionTreeClassifier(max_depth=7)
@@ -61,6 +62,10 @@ def classify_data(data):
     models['gradiant_boosting'] = ensemble.GradientBoostingClassifier()
 
     models['ada_boost'] = ensemble.AdaBoostClassifier()
+
+    feature_coeficients = []
+    for feature in feature_descriptions:
+        feature_coeficients.append([])
 
     cv_scores = {}
     for name in models.keys():
@@ -83,12 +88,22 @@ def classify_data(data):
 
         # Evaluation
         for name, model in fits.items():
-            probabilities = model.predict_proba(x_test)[:, 1]
-            cv_scores[name].append(metrics.roc_auc_score(y_test, probabilities))
+            y_scores_cv = model.predict_proba(x_test)[:, 1]
+            cv_scores[name].append(metrics.roc_auc_score(y_test, y_scores_cv))
+
+        # Feature importance
+        for model in fits.values():
+            model_feature_coefs = model.feature_importances_
+            for i in range(len(model_feature_coefs)):
+                feature_coeficients[i].append(model_feature_coefs[i])
+
+    feature_importance = {}
+    for i in range(len(feature_descriptions)):
+        feature_importance[feature_descriptions[i]] = np.array(feature_coeficients[i]).mean()
 
     avg_scores = {}
-    for name in models.keys():
-        avg_scores[name] = np.array(cv_scores[name]).mean()
+    for name, scores in cv_scores.items():
+        avg_scores[name] = np.array(scores).mean()
 
     # Final fit on complete data set
     best_name = pick_best_model(avg_scores)
@@ -102,9 +117,9 @@ def classify_data(data):
     trip_id_predict = trip_id[original_cases]
     x_predict = final_scale.transform(x_predict)
 
-    probabilities = final_fit.predict_proba(x_predict)[:, 1]
+    y_scores = final_fit.predict_proba(x_predict)[:, 1]
 
-    return np.column_stack((trip_id_predict, probabilities)), best_name
+    return np.column_stack((trip_id_predict, y_scores)), best_name, feature_importance
 
 
 def split_data_target_id(data):
@@ -122,5 +137,5 @@ def pick_best_model(model_scores):
 
 
 if __name__ == '__main__':
-    data = feature_extraction.build_data_set(1)
-    probs = classify_data(data)
+    data, feature_desc = feature_extraction.build_data_set(1)
+    probs = classify_data(data, feature_desc)
