@@ -1,6 +1,8 @@
 __author__ = 'nikosteinhoff'
 
 import numpy as np
+import os
+from src import file_handling
 from src import feature_extraction
 from sklearn import preprocessing
 from sklearn.linear_model import logistic
@@ -16,7 +18,7 @@ def calculate_driver(driver, mp=False):
 
     data = feature_extraction.build_data_set(driver, mp=mp)
 
-    probabilities = classify_data(data)
+    probabilities, model = classify_data(data)
 
     sorted_probabilities = probabilities[probabilities[:, 1].argsort()]
 
@@ -27,7 +29,7 @@ def calculate_driver(driver, mp=False):
 
     driver_results = np.column_stack((np.ones((sorted_calibrated_probabilities.shape[0], 1))*driver,
                                       sorted_calibrated_probabilities))
-    return driver_results
+    return driver_results, model
 
 
 def classify_data(data):
@@ -38,22 +40,33 @@ def classify_data(data):
     models['logistic'] = logistic.LogisticRegression()
     models['logistic_no_intercept'] = logistic.LogisticRegression(fit_intercept=False)
 
-    models['nearest_neighbors_unif'] = neighbors.KNeighborsClassifier()
-    models['nearest_neighbors_dist'] = neighbors.KNeighborsClassifier(weights='distance')
+    models['nearest_neighbors_unif_3'] = neighbors.KNeighborsClassifier(n_neighbors=3)
+    models['nearest_neighbors_unif_5'] = neighbors.KNeighborsClassifier()
+    models['nearest_neighbors_unif_7'] = neighbors.KNeighborsClassifier(n_neighbors=7)
+    models['nearest_neighbors_dist_3'] = neighbors.KNeighborsClassifier(n_neighbors=3, weights='distance')
+    models['nearest_neighbors_dist_5'] = neighbors.KNeighborsClassifier(weights='distance')
+    models['nearest_neighbors_dist_3'] = neighbors.KNeighborsClassifier(n_neighbors=7, weights='distance')
 
     models['tree_5'] = tree.DecisionTreeClassifier(max_depth=5)
-    models['tree_10'] = tree.DecisionTreeClassifier(max_depth=10)
-    models['tree_15'] = tree.DecisionTreeClassifier(max_depth=15)
+    models['tree_7'] = tree.DecisionTreeClassifier(max_depth=7)
+    models['tree_9'] = tree.DecisionTreeClassifier(max_depth=9)
 
-    models['random_forest_5'] = ensemble.RandomForestClassifier(max_depth=5)
-    models['random_forest_10'] = ensemble.RandomForestClassifier(max_depth=10)
-    models['random_forest_15'] = ensemble.RandomForestClassifier(max_depth=15)
+    models['random_forest_10_5'] = ensemble.RandomForestClassifier(max_depth=5)
+    models['random_forest_10_7'] = ensemble.RandomForestClassifier(max_depth=7)
+    models['random_forest_10_9'] = ensemble.RandomForestClassifier(max_depth=9)
+    models['random_forest_20_5'] = ensemble.RandomForestClassifier(n_estimators=20, max_depth=5)
+    models['random_forest_20_7'] = ensemble.RandomForestClassifier(n_estimators=20, max_depth=7)
+    models['random_forest_20_9'] = ensemble.RandomForestClassifier(n_estimators=20, max_depth=9)
+
+    models['gradiant_boosting'] = ensemble.GradientBoostingClassifier()
+
+    models['ada_boost'] = ensemble.AdaBoostClassifier()
 
     cv_scores = {}
     for name in models.keys():
         cv_scores[name] = []
 
-    kf = cross_validation.StratifiedKFold(y, n_folds=5)
+    kf = cross_validation.StratifiedKFold(y, n_folds=5, random_state=123)
     for train_index, test_index in kf:
         x_train, x_test = x[train_index], x[test_index]
         y_train, y_test = y[train_index], y[test_index]
@@ -91,7 +104,7 @@ def classify_data(data):
 
     probabilities = final_fit.predict_proba(x_predict)[:, 1]
 
-    return np.column_stack((trip_id_predict, probabilities))
+    return np.column_stack((trip_id_predict, probabilities)), best_name
 
 
 def split_data_target_id(data):

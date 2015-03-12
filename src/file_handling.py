@@ -67,6 +67,23 @@ def write_to_submission_file(line, overwrite=False, test=False, data_directory=N
         file.write(line+'\n')
 
 
+def write_to_model_frequencies_file(line, overwrite=False, test=False, data_directory=None):
+    if not data_directory:
+        data_directory = _data_directory
+
+    if test:
+        file_path = os.path.join(data_directory, 'model_frequencies_test.csv')
+    else:
+        file_path = os.path.join(data_directory, 'model_frequencies_{0}.csv'.format(int(file_creation_time)))
+
+    if overwrite:
+        mode = 'w'
+    else:
+        mode = 'a'
+
+    with open(file_path, mode) as file:
+        file.write(line+'\n')
+
 if __name__ == '__main__':
     drivers = get_drivers()
     trips = get_trips(1)

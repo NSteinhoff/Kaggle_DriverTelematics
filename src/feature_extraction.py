@@ -102,11 +102,12 @@ def extract_trip_features(driver, trip):
     col_std = transformed_data[:, 4:].std(axis=0)
 
     # Interquartile ranges
-    col_quartiles = np.percentile(transformed_data[:, 4:], [25, 75], axis=0)
-    col_iqr = col_quartiles[1] - col_quartiles[0]
+    col_quartiles = np.percentile(transformed_data[:, 4:], [25, 50, 75], axis=0)
+    col_iqr = col_quartiles[2] - col_quartiles[0]
+    col_med = col_quartiles[1]
 
     # A single row of features per trip
-    features = np.hstack((trip, duration, length, col_means, col_std, col_iqr))
+    features = np.hstack((trip, duration, length, col_means, col_std, col_iqr, col_med))
 
     return features
 
