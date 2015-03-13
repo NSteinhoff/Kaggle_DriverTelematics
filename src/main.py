@@ -128,4 +128,4 @@ def main(test=False):
 
 if __name__ == '__main__':
     np.set_printoptions(suppress=True, precision=2)
-    main(test=True)
+    main(test=False)
