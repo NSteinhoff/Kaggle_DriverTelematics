@@ -32,44 +32,6 @@ def write_results_to_file(probability_results, test):
                 int(row[0]), int(row[1]), row[3]), test=test)
 
 
-def generate_model_frequencies(models, test=False, plot=False):
-    model_counts = {}
-    for model in models:
-        name = model
-        if name in model_counts.keys():
-            model_counts[name] += 1
-        else:
-            model_counts[name] = 1
-
-    file_handling.write_to_model_frequencies_file("model,frequency", overwrite=True, test=test)
-    for model, count in model_counts.items():
-        line = "{0},{1}".format(model, count)
-        file_handling.write_to_model_frequencies_file(line, test=test)
-
-    if plot:
-        plot_model_counts(model_counts)
-    return model_counts
-
-
-def plot_model_counts(model_counts):
-    models = []
-    counts = []
-    for model, count in model_counts.items():
-        models.append(model)
-        counts.append(count)
-
-    index = np.arange(1, len(models)+1)
-    width = .35
-
-    plt.bar(index, counts, width)
-    plt.ylabel('Model counts')
-    plt.title('Number of time a model was chosen')
-    plt.xticks(index+width/2., models)
-    plt.yticks(np.arange(0, max(counts), max(counts)/5))
-
-    plt.show()
-
-
 def calculate_feature_importances(data):
     all_importances = {}
     for dict in data:
@@ -86,6 +48,15 @@ def calculate_feature_importances(data):
     return avg_importances
 
 
+def aggregate_model_results(models, aggregate):
+    for model in models.values():
+        if model.name in aggregate.keys():
+            aggregate[model.name].scores.extend(model.scores)
+            aggregate[model.name].count += model.count
+        else:
+            aggregate[model.name] = model
+
+
 def main(test=False):
     print("This is main()")
     start_time = time.time()
@@ -99,25 +70,28 @@ def main(test=False):
     with Pool() as p:
         results = p.map(classification_model.calculate_driver, drivers)
 
-    models = []
     probability_results = []
     feature_importances = []
-    for result, model, feature_importance in results:
-        models.append(model)
+    aggregate_results = {}
+    for result, models, feature_importance in results:
         probability_results.append(result)
+        aggregate_model_results(models, aggregate_results)
         feature_importances.append(feature_importance)
 
     write_results_to_file(probability_results, test)
 
-    model_counts = generate_model_frequencies(models, test)
-    print("\nModel frequencies: +---------------------+")
-    for model, count in model_counts.items():
-        print("{0:<30}    {1:>10}".format(model+':', count))
+    print("\nModel statistics: +---------------------+")
+    print("{0:<30}{1:>12}{2:>12}{3:>9}".format("Name", "AUC", "Variance", "Count"))
+    for model in aggregate_results.values():
+        print("{0:<30}{1:>12}{2:>12}{3:>9}".format(model.name,
+                                                    '{0:.3f}'.format(model.get_score()),
+                                                    '{0:.6f}'.format(model.get_variance()),
+                                                    model.count))
 
     overall_feature_importances = calculate_feature_importances(feature_importances)
     print("\nFeature importances: +---------------------+")
     for feature, importance in overall_feature_importances.items():
-        print("{0:<30}    {1:>10}".format(feature+':', '{0:.4f}'.format(importance)))
+        print("{0:<30}{1:>15}".format(feature+':', '{0:.4f}'.format(importance)))
 
     total_time = time.time()-start_time
     print("\n+-----------------+")

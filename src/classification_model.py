@@ -4,6 +4,7 @@ import numpy as np
 import os
 from src import file_handling
 from src import feature_extraction
+from src.model import Model
 from sklearn import preprocessing
 from sklearn.linear_model import logistic
 from sklearn import neighbors
@@ -18,7 +19,7 @@ def calculate_driver(driver, mp=False):
 
     data, descriptions = feature_extraction.build_data_set(driver)
 
-    probabilities, model, feature_importance = classify_data(data, descriptions)
+    probabilities, models, feature_importance = classify_data(data, descriptions)
 
     sorted_probabilities = probabilities[probabilities[:, 1].argsort()]
 
@@ -30,7 +31,7 @@ def calculate_driver(driver, mp=False):
     driver_results = np.column_stack((np.ones((sorted_calibrated_probabilities.shape[0], 1))*driver,
                                       sorted_calibrated_probabilities))
 
-    return driver_results, model, feature_importance
+    return driver_results, models, feature_importance
 
 
 def classify_data(data, feature_descriptions):
@@ -38,6 +39,7 @@ def classify_data(data, feature_descriptions):
 
     # Model specifications
     models = {}
+
     # models['logistic'] = logistic.LogisticRegression()
     # models['logistic_no_intercept'] = logistic.LogisticRegression(fit_intercept=False)
 
@@ -48,28 +50,24 @@ def classify_data(data, feature_descriptions):
     # models['nearest_neighbors_dist_5'] = neighbors.KNeighborsClassifier(weights='distance')
     # models['nearest_neighbors_dist_3'] = neighbors.KNeighborsClassifier(n_neighbors=7, weights='distance')
 
-    models['tree_5'] = tree.DecisionTreeClassifier(max_depth=5)
-    models['tree_7'] = tree.DecisionTreeClassifier(max_depth=7)
-    models['tree_9'] = tree.DecisionTreeClassifier(max_depth=9)
-
-    models['random_forest_10_5'] = ensemble.RandomForestClassifier(max_depth=5)
-    models['random_forest_10_7'] = ensemble.RandomForestClassifier(max_depth=7)
-    models['random_forest_10_9'] = ensemble.RandomForestClassifier(max_depth=9)
-    models['random_forest_20_5'] = ensemble.RandomForestClassifier(n_estimators=20, max_depth=5)
-    models['random_forest_20_7'] = ensemble.RandomForestClassifier(n_estimators=20, max_depth=7)
-    models['random_forest_20_9'] = ensemble.RandomForestClassifier(n_estimators=20, max_depth=9)
+    models['random_forest_5'] = ensemble.RandomForestClassifier(n_estimators=50, max_depth=5)
+    models['random_forest_7'] = ensemble.RandomForestClassifier(n_estimators=50, max_depth=7)
+    models['random_forest_9'] = ensemble.RandomForestClassifier(n_estimators=50, max_depth=9)
+    models['random_forest'] = ensemble.RandomForestClassifier(n_estimators=50)
 
     models['gradiant_boosting'] = ensemble.GradientBoostingClassifier()
+    models['gradiant_boosting_stochastic'] = ensemble.GradientBoostingClassifier(subsample=0.8)
 
-    models['ada_boost'] = ensemble.AdaBoostClassifier()
+    models['ada_boost_tree'] = ensemble.AdaBoostClassifier()
+    models['ada_boost_tree_100'] = ensemble.AdaBoostClassifier(n_estimators=100)
+
+    model_objects = {}
+    for name, model in models.items():
+        model_objects[name] = Model(model, name)
 
     feature_coeficients = []
     for feature in feature_descriptions:
         feature_coeficients.append([])
-
-    cv_scores = {}
-    for name in models.keys():
-        cv_scores[name] = []
 
     kf = cross_validation.StratifiedKFold(y, n_folds=5, random_state=123)
     for train_index, test_index in kf:
@@ -82,18 +80,17 @@ def classify_data(data, feature_descriptions):
         x_test = scale.transform(x_test)
 
         # Training
-        fits = {}
-        for name, model in models.items():
-            fits[name] = model.fit(x_train, y_train)
+        for model in model_objects.values():
+            model.fit_model(x_train, y_train)
 
         # Evaluation
-        for name, model in fits.items():
-            y_scores_cv = model.predict_proba(x_test)[:, 1]
-            cv_scores[name].append(metrics.roc_auc_score(y_test, y_scores_cv))
+        for model in model_objects.values():
+            y_predict = model.fitted.predict_proba(x_test)[:, 1]
+            model.score_model(y_test, y_predict)
 
         # Feature importance
-        for model in fits.values():
-            model_feature_coefs = model.feature_importances_
+        for model in model_objects.values():
+            model_feature_coefs = model.fitted.feature_importances_
             for i in range(len(model_feature_coefs)):
                 feature_coeficients[i].append(model_feature_coefs[i])
 
@@ -101,15 +98,13 @@ def classify_data(data, feature_descriptions):
     for i in range(len(feature_descriptions)):
         feature_importance[feature_descriptions[i]] = np.array(feature_coeficients[i]).mean()
 
-    avg_scores = {}
-    for name, scores in cv_scores.items():
-        avg_scores[name] = np.array(scores).mean()
-
     # Final fit on complete data set
-    best_name = pick_best_model(avg_scores)
+    best_model = pick_best_model_object(model_objects)
+    model_objects[best_model.name].count += 1
+
     final_scale = preprocessing.StandardScaler().fit(x)
     x_final = final_scale.transform(x)
-    final_fit = models[best_name].fit(x_final, y)
+    final_fit = best_model.estimator.fit(x_final, y)
 
     # Prediction
     original_cases = y == 1
@@ -119,7 +114,7 @@ def classify_data(data, feature_descriptions):
 
     y_scores = final_fit.predict_proba(x_predict)[:, 1]
 
-    return np.column_stack((trip_id_predict, y_scores)), best_name, feature_importance
+    return np.column_stack((trip_id_predict, y_scores)), model_objects, feature_importance
 
 
 def split_data_target_id(data):
@@ -128,6 +123,12 @@ def split_data_target_id(data):
     trip_id = data[:, 1]
 
     return x, y, trip_id
+
+
+def pick_best_model_object(model_objects):
+    models = list(model_objects.values())
+    avg_scores = [m.avg_score for m in models]
+    return models[avg_scores.index(max(avg_scores))]
 
 
 def pick_best_model(model_scores):

@@ -89,7 +89,8 @@ def extract_trip_features(driver, trip):
 
     # A single row of features per trip
     features = np.hstack((trip, duration, length, col_means, col_std, col_iqr, col_med))
-    descriptions = ['duration', 'length', 
+    descriptions = [
+                    'duration', 'length',
                     'mean_velocity', 'mean_acceleration', 'mean_directional_change', 'mean_velocity*dir_change', 
                     'std_velocity', 'std_acceleration', 'std_directional_change', 'std_velocity*dir_change', 
                     'iqr_velocity', 'iqr_acceleration', 'iqr_directional_change', 'iqr_velocity*dir_change', 
