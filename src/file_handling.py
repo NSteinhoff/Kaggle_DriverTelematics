@@ -33,7 +33,7 @@ def get_trips(driver, data_directory=None):
 
     trips = [int(f[:-4]) for f in os.listdir(trip_directory)
              if os.path.isfile(os.path.join(trip_directory, f))
-             and f.endswith('.csv')]
+             and f.endswith('.csv') and not f.startswith('data_set')]
 
     return sorted(trips)
 

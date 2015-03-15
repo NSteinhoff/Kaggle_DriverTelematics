@@ -5,11 +5,13 @@ from scipy import signal
 from src import file_handling
 import random
 import matplotlib.pyplot as plt
-from multiprocessing import Process, Pipe
+import os
 import time
 
 
 def build_data_set(driver):
+    path = os.path.join(file_handling._data_directory,'drivers', str(driver), 'data_set.csv')
+
     driver_data, descriptions = build_driver_data(driver)
     ref_data = build_reference_data(200, 1, exclude=driver)
 
@@ -17,7 +19,8 @@ def build_data_set(driver):
     ref_data = np.column_stack((np.zeros((ref_data.shape[0], 1), dtype=float), ref_data))  # Add label
 
     complete_data = np.vstack((driver_data, ref_data))
-    # print("Complete data set for driver {0} --->> {1}".format(driver, complete_data.shape))
+
+    np.savetxt(path, complete_data, delimiter=',')
 
     return complete_data, descriptions
 
