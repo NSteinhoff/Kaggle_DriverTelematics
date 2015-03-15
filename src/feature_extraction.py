@@ -7,6 +7,7 @@ import random
 import matplotlib.pyplot as plt
 import os
 import time
+from copy import deepcopy
 
 
 def build_data_set(driver, rebuild_dataset):
@@ -88,8 +89,11 @@ def calculate_features(transformed_data, trip):
     is_turning = transformed_data[:, 2] != 0
     is_moving_and_turning = is_moving * is_turning
     is_moving_and_accelerating = is_moving * is_accelerating
+    is_moving_and_decelerating = is_moving * is_decelerating
     is_accelerating_and_turning = is_accelerating * is_turning
+    is_decelerating_and_turning = is_decelerating * is_turning
     is_moving_accelerating_and_turning = is_moving * is_accelerating * is_turning
+    is_moving_decelerating_and_turning = is_moving * is_decelerating * is_turning
 
     while_moving = transformed_data[is_moving]
     while_accelerating = transformed_data[is_accelerating]
@@ -97,8 +101,11 @@ def calculate_features(transformed_data, trip):
     while_turning = transformed_data[is_turning]
     while_moving_and_turning = transformed_data[is_moving_and_turning]
     while_moving_and_accelerating = transformed_data[is_moving_and_accelerating]
+    while_moving_and_decelerating = transformed_data[is_moving_and_decelerating]
     while_accelerating_and_turning = transformed_data[is_accelerating_and_turning]
+    while_decelerating_and_turning = transformed_data[is_decelerating_and_turning]
     while_moving_accelerating_and_turning = transformed_data[is_moving_accelerating_and_turning]
+    while_moving_decelerating_and_turning = transformed_data[is_moving_decelerating_and_turning]
 
     # List to use if trip does not have any valid readings in order to generate statistics
     fallback_list = [0 for i in range(5)]
@@ -114,7 +121,7 @@ def calculate_features(transformed_data, trip):
         speed_stats.append(speed_percentiles[3] - speed_percentiles[1])
         speed_stats.append(speed_percentiles[4] - speed_percentiles[0])
     else:
-        speed_stats = fallback_list
+        speed_stats = deepcopy(fallback_list)
 
     acceleration_stats = []
     if is_accelerating.sum() > 0:
@@ -127,7 +134,7 @@ def calculate_features(transformed_data, trip):
         acceleration_stats.append(acceleration_percentiles[3] - acceleration_percentiles[1])
         acceleration_stats.append(acceleration_percentiles[4] - acceleration_percentiles[0])
     else:
-        acceleration_stats = fallback_list
+        acceleration_stats = deepcopy(fallback_list)
 
     deceleration_stats = []
     if is_decelerating.sum() > 0:
@@ -140,7 +147,7 @@ def calculate_features(transformed_data, trip):
         deceleration_stats.append(deceleration_percentiles[3] - deceleration_percentiles[1])
         deceleration_stats.append(deceleration_percentiles[4] - deceleration_percentiles[0])
     else:
-        deceleration_stats = fallback_list
+        deceleration_stats = deepcopy(fallback_list)
 
     turning_stats = []
     if is_turning.sum() > 0:
@@ -153,7 +160,7 @@ def calculate_features(transformed_data, trip):
         turning_stats.append(turning_percentiles[3] - turning_percentiles[1])
         turning_stats.append(turning_percentiles[4] - turning_percentiles[0])
     else:
-        turning_stats = fallback_list
+        turning_stats = deepcopy(fallback_list)
 
     speed_turning_stats = []
     if is_moving_and_turning.sum() > 0:
@@ -166,7 +173,7 @@ def calculate_features(transformed_data, trip):
         speed_turning_stats.append(speed_turning_percentiles[3] - speed_turning_percentiles[1])
         speed_turning_stats.append(speed_turning_percentiles[4] - speed_turning_percentiles[0])
     else:
-        speed_turning_stats = fallback_list
+        speed_turning_stats = deepcopy(fallback_list)
 
     speed_accelerating_stats = []
     if is_moving_and_accelerating.sum() > 0:
@@ -179,8 +186,21 @@ def calculate_features(transformed_data, trip):
         speed_accelerating_stats.append(speed_accelerating_percentiles[3] - speed_accelerating_percentiles[1])
         speed_accelerating_stats.append(speed_accelerating_percentiles[4] - speed_accelerating_percentiles[0])
     else:
-        speed_accelerating_stats = fallback_list
+        speed_accelerating_stats = deepcopy(fallback_list)
 
+    speed_decelerating_stats = []
+    if is_moving_and_decelerating.sum() > 0:
+        speed_decelerating = while_moving_and_decelerating[:, 4]
+        speed_decelerating_stats.append(speed_decelerating.mean())
+        speed_decelerating_stats.append(speed_decelerating.std())
+
+        speed_decelerating_percentiles = np.percentile(speed_decelerating, [10, 25, 50, 75, 90])
+        speed_decelerating_stats.append(speed_decelerating_percentiles[2])
+        speed_decelerating_stats.append(speed_decelerating_percentiles[3] - speed_decelerating_percentiles[1])
+        speed_decelerating_stats.append(speed_decelerating_percentiles[4] - speed_decelerating_percentiles[0])
+    else:
+        speed_decelerating_stats = deepcopy(fallback_list)
+        
     accelerating_turning_stats = []
     if is_accelerating_and_turning.sum() > 0:
         accelerating_turning = while_accelerating_and_turning[:, 5]
@@ -192,7 +212,20 @@ def calculate_features(transformed_data, trip):
         accelerating_turning_stats.append(accelerating_turning_percentiles[3] - accelerating_turning_percentiles[1])
         accelerating_turning_stats.append(accelerating_turning_percentiles[4] - accelerating_turning_percentiles[0])
     else:
-        accelerating_turning_stats = fallback_list
+        accelerating_turning_stats = deepcopy(fallback_list)
+                
+    decelerating_turning_stats = []
+    if is_decelerating_and_turning.sum() > 0:
+        decelerating_turning = while_decelerating_and_turning[:, 5]
+        decelerating_turning_stats.append(decelerating_turning.mean())
+        decelerating_turning_stats.append(decelerating_turning.std())
+
+        decelerating_turning_percentiles = np.percentile(decelerating_turning, [10, 25, 50, 75, 90])
+        decelerating_turning_stats.append(decelerating_turning_percentiles[2])
+        decelerating_turning_stats.append(decelerating_turning_percentiles[3] - decelerating_turning_percentiles[1])
+        decelerating_turning_stats.append(decelerating_turning_percentiles[4] - decelerating_turning_percentiles[0])
+    else:
+        decelerating_turning_stats = deepcopy(fallback_list)
         
     moving_accelerating_turning_stats = []
     if is_moving_accelerating_and_turning.sum() > 0:
@@ -207,7 +240,22 @@ def calculate_features(transformed_data, trip):
         moving_accelerating_turning_stats.append(
             moving_accelerating_turning_percentiles[4] - moving_accelerating_turning_percentiles[0])
     else:
-        moving_accelerating_turning_stats = fallback_list
+        moving_accelerating_turning_stats = deepcopy(fallback_list)
+        
+    moving_decelerating_turning_stats = []
+    if is_moving_decelerating_and_turning.sum() > 0:
+        moving_decelerating_turning = while_moving_decelerating_and_turning[:, 6]
+        moving_decelerating_turning_stats.append(moving_decelerating_turning.mean())
+        moving_decelerating_turning_stats.append(moving_decelerating_turning.std())
+
+        moving_decelerating_turning_percentiles = np.percentile(moving_decelerating_turning, [10, 25, 50, 75, 90])
+        moving_decelerating_turning_stats.append(moving_decelerating_turning_percentiles[2])
+        moving_decelerating_turning_stats.append(
+            moving_decelerating_turning_percentiles[3] - moving_decelerating_turning_percentiles[1])
+        moving_decelerating_turning_stats.append(
+            moving_decelerating_turning_percentiles[4] - moving_decelerating_turning_percentiles[0])
+    else:
+        moving_decelerating_turning_stats = deepcopy(fallback_list)
 
     new_features = np.hstack((trip,
                               duration,
@@ -218,8 +266,14 @@ def calculate_features(transformed_data, trip):
                               turning_stats,
                               speed_turning_stats,
                               speed_accelerating_stats,
+                              speed_decelerating_stats,
                               accelerating_turning_stats,
-                              moving_accelerating_turning_stats))
+                              decelerating_turning_stats,
+                              moving_accelerating_turning_stats,
+                              moving_decelerating_turning_stats))
+
+    if new_features.size < 58:
+        print("why?")
 
     return new_features
 
@@ -413,7 +467,7 @@ def unit_vector(vector):
 
 if __name__ == '__main__':
     start_time = time.time()
-    test_data = build_driver_data(1, 5)
+    test_data = build_data_set(1, rebuild_dataset=True)
     print(test_data.shape)
     print("Elapsed = {0:.2f}".format(time.time() - start_time))
     print("done!")

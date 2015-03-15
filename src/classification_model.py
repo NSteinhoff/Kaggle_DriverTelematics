@@ -2,6 +2,7 @@ __author__ = 'nikosteinhoff'
 
 import numpy as np
 from src import feature_extraction
+from src.box_cox_transformer import Box_cox_transformer
 from src.model import Model
 from sklearn import preprocessing
 from sklearn.linear_model import logistic
@@ -14,6 +15,9 @@ from sklearn.svm import SVC
 from sklearn import naive_bayes
 from sklearn.decomposition import PCA
 from sklearn import pipeline
+
+from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.pyplot as plt
 
 
 def calculate_driver(driver, rebuild_dataset=False):
@@ -38,6 +42,8 @@ def calculate_driver(driver, rebuild_dataset=False):
 
 def classify_data(data):
     x, y, trip_id = split_data_target_id(data)
+
+    # explore_data(x)
 
     # Model specifications
     model_specifications = {
@@ -151,6 +157,23 @@ def pick_best_model(model_objects):
     return best_model
 
 
+def explore_data(data):
+    plt.interactive(False)
+    pp = PdfPages('plots.pdf')
+
+    for i in range(data.shape[1]):
+        column = data[:, i]
+        plt.hist(column)
+        pp.savefig()
+        plt.clf()
+    pp.close()
+    return
+
+
+
+
+
+
 if __name__ == '__main__':
-    data = feature_extraction.build_data_set(1)
+    data = feature_extraction.build_data_set(1, False)
     probs = classify_data(data)
