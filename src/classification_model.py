@@ -43,8 +43,6 @@ def calculate_driver(driver, rebuild_dataset=False):
 def classify_data(data):
     x, y, trip_id = split_data_target_id(data)
 
-    # explore_data(x)
-
     # Model specifications
     model_specifications = {
         'logistic_no_intercept': logistic.LogisticRegression(fit_intercept=False),
@@ -101,12 +99,12 @@ def classify_data(data):
         models[name] = Model(model, name)
 
 
-    kf = cross_validation.StratifiedKFold(y, n_folds=5, random_state=123)
+    use_box_cox_transformation = False
+    kf = cross_validation.StratifiedKFold(y, n_folds=10, random_state=123)
     for train_index, test_index in kf:
         x_train, x_test = x[train_index], x[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
-        # Pre-processing
         scale = preprocessing.StandardScaler().fit(x_train)
         x_train = scale.transform(x_train)
         x_test = scale.transform(x_test)
@@ -177,3 +175,4 @@ def explore_data(data):
 if __name__ == '__main__':
     data = feature_extraction.build_data_set(1, False)
     probs = classify_data(data)
+    print(probs)

@@ -92,4 +92,4 @@ def main(test=False, rebuild_dataset=False):
 
 
 if __name__ == '__main__':
-    main(test=True, rebuild_dataset=False)
+    main(test=False, rebuild_dataset=True)
