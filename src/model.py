@@ -11,7 +11,7 @@ class Model:
         self.name = name
         self.scores = []
         self.avg_score = 0
-        self.is_best = False
+        self.count = 0
         self.fitted = None
 
     def get_score(self):

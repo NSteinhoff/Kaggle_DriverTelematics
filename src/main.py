@@ -6,16 +6,19 @@ from src import file_handling
 from src import classification_model
 import multiprocessing
 from multiprocessing import Pool
-import matplotlib.pyplot as plt
+from functools import partial
 
 import time
 
 
-def estimate_duration(drivers):
+def estimate_duration(drivers, rebuild_dataset):
+
+    calculate_driver_results = partial(classification_model.calculate_driver, rebuild_dataset=rebuild_dataset)
+
     start_time = time.time()
     timing_sample = drivers[:multiprocessing.cpu_count() * 3]
     with Pool() as test_p:
-        test_p.map(classification_model.calculate_driver, timing_sample)
+        test_p.map(calculate_driver_results, timing_sample)
     avg_time = (time.time() - start_time) / len(timing_sample)
     estimated_total_time = avg_time * len(drivers)
     estimated_completion_time = start_time + estimated_total_time
@@ -56,7 +59,7 @@ def summarize_model_statistics(results, test=False):
         file_handling.write_to_model_stats_file(line, overwrite=False, test=test)
 
 
-def main(test=False):
+def main(test=False, rebuild_dataset=False):
     print("This is main()")
     start_time = time.time()
     drivers = file_handling.get_drivers()
@@ -64,10 +67,12 @@ def main(test=False):
     if test:
         drivers = drivers[:24]
     else:
-        estimate_duration(drivers)
+        estimate_duration(drivers, rebuild_dataset)
+
+    calculate_driver_results = partial(classification_model.calculate_driver, rebuild_dataset=rebuild_dataset)
 
     with Pool() as p:
-        results = p.map(classification_model.calculate_driver, drivers)
+        results = p.map(calculate_driver_results, drivers)
 
     probability_results = []
     aggregate_results = {}
@@ -87,5 +92,4 @@ def main(test=False):
 
 
 if __name__ == '__main__':
-    np.set_printoptions(suppress=True, precision=2)
-    main(test=False)
+    main(test=False, rebuild_dataset=False)

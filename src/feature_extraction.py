@@ -5,22 +5,25 @@ from scipy import signal
 from src import file_handling
 import random
 import matplotlib.pyplot as plt
-from multiprocessing import Process, Pipe
+import os
 import time
 
 
-def build_data_set(driver):
+def build_data_set(driver, rebuild_dataset):
     path = os.path.join(file_handling._data_directory,'drivers', str(driver), 'data_set.csv')
 
-    driver_data = build_driver_data(driver)
-    ref_data = build_reference_data(200, 1, exclude=driver)
+    if rebuild_dataset or not os.path.isfile(path):
+        driver_data = build_driver_data(driver)
+        ref_data = build_reference_data(200, 1, exclude=driver)
 
-    driver_data = np.column_stack((np.ones((driver_data.shape[0], 1), dtype=float), driver_data))  # Add label
-    ref_data = np.column_stack((np.zeros((ref_data.shape[0], 1), dtype=float), ref_data))  # Add label
+        driver_data = np.column_stack((np.ones((driver_data.shape[0], 1), dtype=float), driver_data))  # Add label
+        ref_data = np.column_stack((np.zeros((ref_data.shape[0], 1), dtype=float), ref_data))  # Add label
 
-    complete_data = np.vstack((driver_data, ref_data))
+        complete_data = np.vstack((driver_data, ref_data))
 
-    np.savetxt(path, complete_data, delimiter=',')
+        np.savetxt(path, complete_data, delimiter=',')
+    else:
+        complete_data = np.genfromtxt(path, delimiter=',')
 
     return complete_data
 
@@ -229,7 +232,7 @@ def unit_vector(vector):
 
 if __name__ == '__main__':
     start_time = time.time()
-    test_data, feature_descriptions = build_data_set(1)
+    test_data = build_data_set(1, rebuild_dataset=True)
     print(test_data.shape)
     print("Elapsed = {0:.2f}".format(time.time() - start_time))
     print("done!")

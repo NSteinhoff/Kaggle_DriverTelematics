@@ -16,10 +16,10 @@ from sklearn.decomposition import PCA
 from sklearn import pipeline
 
 
-def calculate_driver(driver, mp=False):
+def calculate_driver(driver, rebuild_dataset=False):
     print("Calculating driver {0}".format(driver))
 
-    data = feature_extraction.build_data_set(driver)
+    data = feature_extraction.build_data_set(driver, rebuild_dataset)
 
     probabilities, models = classify_data(data)
 
