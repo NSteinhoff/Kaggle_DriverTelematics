@@ -22,13 +22,6 @@ def build_data_set(driver):
     return complete_data, descriptions
 
 
-def piped_process(pipe, function, *args):
-    return_value = function(*args)
-
-    pipe.send(return_value)
-    pipe.close()
-
-
 def build_driver_data(driver, sample_size=None):
     trips = file_handling.get_trips(driver)
 
@@ -83,18 +76,25 @@ def extract_trip_features(driver, trip):
     col_std = transformed_data[:, 4:].std(axis=0)
 
     # Interquartile ranges
-    col_quartiles = np.percentile(transformed_data[:, 4:], [25, 50, 75], axis=0)
-    col_iqr = col_quartiles[2] - col_quartiles[0]
-    col_med = col_quartiles[1]
+    col_percentiles = np.percentile(transformed_data[:, 4:], [10, 25, 50, 75, 90], axis=0)
+    col_iqr = col_percentiles[3] - col_percentiles[1]
+    col_10_90_range = col_percentiles[0] - col_percentiles[4]
+    col_med = col_percentiles[2]
 
     # A single row of features per trip
-    features = np.hstack((trip, duration, length, col_means, col_std, col_iqr, col_med))
+    features = np.hstack((trip, duration, length, col_means, col_std, col_iqr, col_10_90_range, col_med))
     descriptions = [
                     'duration', 'length',
-                    'mean_velocity', 'mean_acceleration', 'mean_directional_change', 'mean_velocity*dir_change', 
-                    'std_velocity', 'std_acceleration', 'std_directional_change', 'std_velocity*dir_change', 
-                    'iqr_velocity', 'iqr_acceleration', 'iqr_directional_change', 'iqr_velocity*dir_change', 
-                    'median_velocity', 'median_acceleration', 'median_directional_change', 'median_velocity*dir_change'
+                    'mean_velocity', 'mean_acceleration', 'mean_directional_change',
+                    'mean_velocity*dir_change', 'mean_velocity*acceleration', 'mean_acceleration*dir_change',
+                    'std_velocity', 'std_acceleration', 'std_directional_change',
+                    'std_velocity*dir_change', 'std_velocity*acceleration', 'std_acceleration*dir_change', 
+                    'iqr_velocity', 'iqr_acceleration', 'iqr_directional_change',
+                    'iqr_velocity*dir_change',  'iqr_velocity*acceleration', 'iqr_acceleration*dir_change',
+                    '90pcr_velocity', '90pcr_acceleration', '90pcr_directional_change',
+                    '90pcr_velocity*dir_change',  '90pcr_velocity*acceleration', '90pcr_acceleration*dir_change',
+                    'median_velocity', 'median_acceleration', 'median_directional_change',
+                    'median_velocity*dir_change', 'median_velocity*acceleration', 'median_acceleration*dir_change'
                     ]
 
     return features, descriptions
@@ -155,11 +155,15 @@ def transform_data(raw_data, plot=False):
     temp_data = np.column_stack((temp_data, directional_changes))
     ix_direction_changes = 6
 
-    # Speed * directional changes
+    # Interactions between speed, directional changes and acceleration
     speed_times_turn = []
+    speed_times_acceleration = []
+    acceleration_times_turn = []
     for row in temp_data:
         speed_times_turn.append(row[ix_velocity] * row[ix_direction_changes])
-    temp_data = np.column_stack((temp_data, speed_times_turn))
+        speed_times_acceleration.append(row[ix_velocity] * row[ix_acceleration])
+        acceleration_times_turn.append(row[ix_acceleration] * row[ix_direction_changes])
+    temp_data = np.column_stack((temp_data, speed_times_turn, speed_times_acceleration, acceleration_times_turn))
 
     transformed_data = np.copy(temp_data)
 

@@ -98,10 +98,11 @@ def classify_data(data, feature_descriptions):
     for i in range(len(feature_descriptions)):
         feature_importance[feature_descriptions[i]] = np.array(feature_coeficients[i]).mean()
 
-    # Final fit on complete data set
+    # Pick the model with the best CV-AUC
     best_model = pick_best_model_object(model_objects)
-    model_objects[best_model.name].count += 1
+    best_model.count += 1
 
+    # Final fit on complete data set
     final_scale = preprocessing.StandardScaler().fit(x)
     x_final = final_scale.transform(x)
     final_fit = best_model.estimator.fit(x_final, y)
@@ -129,12 +130,6 @@ def pick_best_model_object(model_objects):
     models = list(model_objects.values())
     avg_scores = [m.avg_score for m in models]
     return models[avg_scores.index(max(avg_scores))]
-
-
-def pick_best_model(model_scores):
-    keys = list(model_scores.keys())
-    values = list(model_scores.values())
-    return keys[values.index(max(values))]
 
 
 if __name__ == '__main__':
