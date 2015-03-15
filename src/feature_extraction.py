@@ -5,14 +5,14 @@ from scipy import signal
 from src import file_handling
 import random
 import matplotlib.pyplot as plt
-import os
+from multiprocessing import Process, Pipe
 import time
 
 
 def build_data_set(driver):
     path = os.path.join(file_handling._data_directory,'drivers', str(driver), 'data_set.csv')
 
-    driver_data, descriptions = build_driver_data(driver)
+    driver_data = build_driver_data(driver)
     ref_data = build_reference_data(200, 1, exclude=driver)
 
     driver_data = np.column_stack((np.ones((driver_data.shape[0], 1), dtype=float), driver_data))  # Add label
@@ -22,7 +22,7 @@ def build_data_set(driver):
 
     np.savetxt(path, complete_data, delimiter=',')
 
-    return complete_data, descriptions
+    return complete_data
 
 
 def build_driver_data(driver, sample_size=None):
@@ -34,7 +34,7 @@ def build_driver_data(driver, sample_size=None):
     driver_data = np.zeros((1, 1), dtype=float)
     for trip in trips:
         # extract features
-        trip_features, descriptions = extract_trip_features(driver, trip)
+        trip_features = extract_trip_features(driver, trip)
 
         # append row to array
         if driver_data.size == 1:
@@ -42,7 +42,7 @@ def build_driver_data(driver, sample_size=None):
         else:
             driver_data = np.vstack((driver_data, trip_features))
 
-    return driver_data, descriptions
+    return driver_data
 
 
 def build_reference_data(n_drivers=200, n_trips=1, exclude=None):
@@ -52,7 +52,7 @@ def build_reference_data(n_drivers=200, n_trips=1, exclude=None):
 
     reference_data = np.zeros((1, 1), dtype=float)
     for driver in drivers_sample:
-        driver_data, descriptions = build_driver_data(driver, n_trips)
+        driver_data = build_driver_data(driver, n_trips)
 
         if reference_data.size == 1:
             reference_data = np.copy(driver_data)
@@ -100,7 +100,7 @@ def extract_trip_features(driver, trip):
                     'median_velocity*dir_change', 'median_velocity*acceleration', 'median_acceleration*dir_change'
                     ]
 
-    return features, descriptions
+    return features
 
 
 def transform_data(raw_data, plot=False):

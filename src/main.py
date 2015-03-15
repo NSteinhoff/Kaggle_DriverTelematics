@@ -32,22 +32,6 @@ def write_results_to_file(probability_results, test):
                 int(row[0]), int(row[1]), row[3]), test=test)
 
 
-def calculate_feature_importances(data):
-    all_importances = {}
-    for dict in data:
-        for name, value in dict.items():
-            if name in all_importances.keys():
-                all_importances[name].append(value)
-            else:
-                all_importances[name] = [value]
-
-    avg_importances = {}
-    for name, values in all_importances.items():
-        avg_importances[name] = np.array(values).mean()
-
-    return avg_importances
-
-
 def aggregate_model_results(models, aggregate):
     for model in models.values():
         if model.name in aggregate.keys():
@@ -57,13 +41,28 @@ def aggregate_model_results(models, aggregate):
             aggregate[model.name] = model
 
 
+def summarize_model_statistics(results, test=False):
+    print("\nModel statistics: +---------------------+")
+    header = "{0:<50}{1:>12}{2:>12}{3:>9}".format("Name", "AUC", "Variance", "Count")
+    print(header)
+    file_handling.write_to_model_stats_file(header, overwrite=True, test=test)
+
+    for model in results.values():
+        line = "{0:<50}{1:>12}{2:>12}{3:>9}".format(model.name,
+                                                    '{0:.3f}'.format(model.get_score()),
+                                                    '{0:.6f}'.format(model.get_variance()),
+                                                    model.count)
+        print(line)
+        file_handling.write_to_model_stats_file(line, overwrite=False, test=test)
+
+
 def main(test=False):
     print("This is main()")
     start_time = time.time()
     drivers = file_handling.get_drivers()
     file_handling.write_to_submission_file("driver_trip,prob", overwrite=True, test=test)
     if test:
-        drivers = drivers[:8]
+        drivers = drivers[:24]
     else:
         estimate_duration(drivers)
 
@@ -71,27 +70,14 @@ def main(test=False):
         results = p.map(classification_model.calculate_driver, drivers)
 
     probability_results = []
-    feature_importances = []
     aggregate_results = {}
-    for result, models, feature_importance in results:
+    for result, models in results:
         probability_results.append(result)
         aggregate_model_results(models, aggregate_results)
-        feature_importances.append(feature_importance)
 
     write_results_to_file(probability_results, test)
 
-    print("\nModel statistics: +---------------------+")
-    print("{0:<30}{1:>12}{2:>12}{3:>9}".format("Name", "AUC", "Variance", "Count"))
-    for model in aggregate_results.values():
-        print("{0:<30}{1:>12}{2:>12}{3:>9}".format(model.name,
-                                                    '{0:.3f}'.format(model.get_score()),
-                                                    '{0:.6f}'.format(model.get_variance()),
-                                                    model.count))
-
-    overall_feature_importances = calculate_feature_importances(feature_importances)
-    print("\nFeature importances: +---------------------+")
-    for feature, importance in overall_feature_importances.items():
-        print("{0:<30}{1:>15}".format(feature+':', '{0:.4f}'.format(importance)))
+    summarize_model_statistics(aggregate_results, test)
 
     total_time = time.time()-start_time
     print("\n+-----------------+")
