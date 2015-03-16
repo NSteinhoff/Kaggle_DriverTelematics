@@ -4,34 +4,31 @@ from scipy import stats
 import numpy as np
 
 
-class Box_cox_transformer():
+class BoxCoxTransformer():
     def __init__(self):
-        self.lmbdas = []
+        self.lambdas = []
         self.shift = 1
 
     def fit(self, data):
-        self.lmbdas = []
+        self.lambdas = []
 
         data = np.absolute(data) + self.shift
         for i in range(data.shape[1]):
             column = data[:, i]
-            self.fit_column(column)
-
-    def fit_column(self, array):
-        trans, l = stats.boxcox(np.absolute(array))
-        self.lmbdas.append(l)
+            trans, l = stats.boxcox(column/column.mean())
+            self.lambdas.append(l)
 
     def transform(self, data):
         data_trans = np.zeros((1, 1), dtype=float)
 
-        if not self.lmbdas:
+        if not self.lambdas:
             self.fit(data)
         else:
             data = np.absolute(data) + self.shift
 
         for i in range(data.shape[1]):
             column = data[:, i]
-            column_trans = stats.boxcox(np.absolute(column), self.lmbdas[i])
+            column_trans = stats.boxcox(column/column.mean(), self.lambdas[i])
 
             if data_trans.size == 1:
                 data_trans = np.copy(column_trans)

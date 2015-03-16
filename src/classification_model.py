@@ -2,14 +2,12 @@ __author__ = 'nikosteinhoff'
 
 import numpy as np
 from src import feature_extraction
-from src.box_cox_transformer import Box_cox_transformer
+from src.boxcox_transformer import BoxCoxTransformer
 from src.model import Model
 from sklearn import preprocessing
 from sklearn.linear_model import logistic
 from sklearn import neighbors
 from sklearn import cross_validation
-from sklearn import metrics
-from sklearn import tree
 from sklearn import ensemble
 from sklearn.svm import SVC
 from sklearn import naive_bayes
@@ -43,6 +41,7 @@ def calculate_driver(driver, rebuild_dataset=False):
 def classify_data(data):
     x, y, trip_id = split_data_target_id(data)
 
+    use_boxcox_transform = False
     # Model specifications
     model_specifications = {
         'logistic_no_intercept': logistic.LogisticRegression(fit_intercept=False),
@@ -98,13 +97,20 @@ def classify_data(data):
     for name, model in model_specifications.items():
         models[name] = Model(model, name)
 
-
-    use_box_cox_transformation = False
     kf = cross_validation.StratifiedKFold(y, n_folds=10, random_state=123)
     for train_index, test_index in kf:
         x_train, x_test = x[train_index], x[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
+        # Remove skewness
+        if use_boxcox_transform:
+            bc_transformer = BoxCoxTransformer()
+            bc_transformer.fit(x_train)
+            x_train = bc_transformer.transform(x_train)
+            x_test = bc_transformer.transform(x_test)
+
+
+        # Normalizing
         scale = preprocessing.StandardScaler().fit(x_train)
         x_train = scale.transform(x_train)
         x_test = scale.transform(x_test)
@@ -121,15 +127,25 @@ def classify_data(data):
     # Select the model with the best cv-auc
     best_model = pick_best_model(models)
 
-    # Final fit on complete data set
+    #Preprocessing
+    # Remove skewness
+    bc_transformer = BoxCoxTransformer()
+    if use_boxcox_transform:
+        bc_transformer.fit(x)
+        x = bc_transformer.transform(x)
+
     final_scale = preprocessing.StandardScaler().fit(x)
     x_final = final_scale.transform(x)
+
+    # Final fit on complete data set
     final_fit = best_model.estimator.fit(x_final, y)
 
     # Prediction
     original_cases = y == 1
     x_predict = x[original_cases]
     trip_id_predict = trip_id[original_cases]
+    if use_boxcox_transform:
+        x_predict = bc_transformer.transform(x_predict)
     x_predict = final_scale.transform(x_predict)
 
     y_scores = final_fit.predict_proba(x_predict)[:, 1]
@@ -175,4 +191,4 @@ def explore_data(data):
 if __name__ == '__main__':
     data = feature_extraction.build_data_set(1, False)
     probs = classify_data(data)
-    print(probs)
+    print("Done!")

@@ -65,7 +65,7 @@ def main(test=False, rebuild_dataset=False):
     drivers = file_handling.get_drivers()
     file_handling.write_to_submission_file("driver_trip,prob", overwrite=True, test=test)
     if test:
-        drivers = drivers[:24]
+        drivers = drivers[:12]
     else:
         estimate_duration(drivers, rebuild_dataset)
 
@@ -92,4 +92,4 @@ def main(test=False, rebuild_dataset=False):
 
 
 if __name__ == '__main__':
-    main(test=False, rebuild_dataset=True)
+    main(test=True, rebuild_dataset=False)
