@@ -14,6 +14,9 @@ class Model:
         self.count = 0
         self.fitted = None
 
+    def get_description(self):
+        return self.name
+
     def get_score(self):
         return np.array(self.scores).mean()
 
@@ -26,3 +29,8 @@ class Model:
     def score_model(self, y_true, y_predict):
         self.scores.append(roc_auc_score(y_true, y_predict))
         self.avg_score = np.array(self.scores).mean()
+
+    def predict_probabilities_gridsearch(self, x):
+        best_estimator = self.estimator.best_estimator_
+        return best_estimator.predict_proba(x)
+
