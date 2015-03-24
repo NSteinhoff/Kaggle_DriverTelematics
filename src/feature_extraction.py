@@ -67,26 +67,25 @@ def build_reference_data(n_drivers=200, n_trips=1, exclude=None):
 
 
 def calculate_features(transformed_data, trip):
-    ### NEW (and improved) features
     ### Indices:
-    # speed = 0
-    # speed changes = 1
-    # turns = 2
-    # speed*turns = 3
-    # speed * acceleration = 4
-    # acceleration * turns = 5
-    # speed * acceleration * turns = 6
+    IX_SPEED = 0
+    IX_SPEED_CHANGES = 1
+    IX_TURNS = 2
+    IX_SPEED_TURNS = 3
+    IX_SPEED_ACCELERATION = 4
+    IX_ACCELERATION_TURNS = 5
+    IX_SPEED_ACCELERATION_TURNS = 6
 
     # Duration
     duration = transformed_data.shape[0]
 
     # Length
-    length = transformed_data[:, 0].sum()
+    length = transformed_data[:, IX_SPEED].sum()
 
-    is_moving = transformed_data[:, 0] > 0
-    is_accelerating = transformed_data[:, 1] > 0
-    is_decelerating = transformed_data[:, 1] < 0
-    is_turning = transformed_data[:, 2] != 0
+    is_moving = transformed_data[:, IX_SPEED] > 0
+    is_accelerating = transformed_data[:, IX_SPEED_CHANGES] > 0
+    is_decelerating = transformed_data[:, IX_SPEED_CHANGES] < 0
+    is_turning = transformed_data[:, IX_TURNS] != 0
     is_moving_and_turning = is_moving * is_turning
     is_moving_and_accelerating = is_moving * is_accelerating
     is_moving_and_decelerating = is_moving * is_decelerating
@@ -112,7 +111,7 @@ def calculate_features(transformed_data, trip):
 
     speed_stats = []
     if is_moving.sum() > 0:
-        speed = while_moving[:, 0]
+        speed = while_moving[:, IX_SPEED]
         speed_stats.append(speed.mean())
         speed_stats.append(speed.std())
 
@@ -125,7 +124,7 @@ def calculate_features(transformed_data, trip):
 
     acceleration_stats = []
     if is_accelerating.sum() > 0:
-        acceleration = while_accelerating[:, 1]
+        acceleration = while_accelerating[:, IX_SPEED_CHANGES]
         acceleration_stats.append(acceleration.mean())
         acceleration_stats.append(acceleration.std())
 
@@ -138,7 +137,7 @@ def calculate_features(transformed_data, trip):
 
     deceleration_stats = []
     if is_decelerating.sum() > 0:
-        deceleration = while_decelerating[:, 1]
+        deceleration = while_decelerating[:, IX_SPEED_CHANGES]
         deceleration_stats.append(deceleration.mean())
         deceleration_stats.append(deceleration.std())
 
@@ -151,7 +150,7 @@ def calculate_features(transformed_data, trip):
 
     turning_stats = []
     if is_turning.sum() > 0:
-        turning = while_turning[:, 2]
+        turning = while_turning[:, IX_TURNS]
         turning_stats.append(turning.mean())
         turning_stats.append(turning.std())
 
@@ -164,7 +163,7 @@ def calculate_features(transformed_data, trip):
 
     speed_turning_stats = []
     if is_moving_and_turning.sum() > 0:
-        speed_turning = while_moving_and_turning[:, 3]
+        speed_turning = while_moving_and_turning[:, IX_SPEED_TURNS]
         speed_turning_stats.append(speed_turning.mean())
         speed_turning_stats.append(speed_turning.std())
 
@@ -177,7 +176,7 @@ def calculate_features(transformed_data, trip):
 
     speed_accelerating_stats = []
     if is_moving_and_accelerating.sum() > 0:
-        speed_accelerating = while_moving_and_accelerating[:, 4]
+        speed_accelerating = while_moving_and_accelerating[:, IX_SPEED_ACCELERATION]
         speed_accelerating_stats.append(speed_accelerating.mean())
         speed_accelerating_stats.append(speed_accelerating.std())
 
@@ -190,7 +189,7 @@ def calculate_features(transformed_data, trip):
 
     speed_decelerating_stats = []
     if is_moving_and_decelerating.sum() > 0:
-        speed_decelerating = while_moving_and_decelerating[:, 4]
+        speed_decelerating = while_moving_and_decelerating[:, IX_SPEED_ACCELERATION]
         speed_decelerating_stats.append(speed_decelerating.mean())
         speed_decelerating_stats.append(speed_decelerating.std())
 
@@ -203,7 +202,7 @@ def calculate_features(transformed_data, trip):
         
     accelerating_turning_stats = []
     if is_accelerating_and_turning.sum() > 0:
-        accelerating_turning = while_accelerating_and_turning[:, 5]
+        accelerating_turning = while_accelerating_and_turning[:, IX_ACCELERATION_TURNS]
         accelerating_turning_stats.append(accelerating_turning.mean())
         accelerating_turning_stats.append(accelerating_turning.std())
 
@@ -216,7 +215,7 @@ def calculate_features(transformed_data, trip):
                 
     decelerating_turning_stats = []
     if is_decelerating_and_turning.sum() > 0:
-        decelerating_turning = while_decelerating_and_turning[:, 5]
+        decelerating_turning = while_decelerating_and_turning[:, IX_ACCELERATION_TURNS]
         decelerating_turning_stats.append(decelerating_turning.mean())
         decelerating_turning_stats.append(decelerating_turning.std())
 
@@ -229,7 +228,7 @@ def calculate_features(transformed_data, trip):
         
     moving_accelerating_turning_stats = []
     if is_moving_accelerating_and_turning.sum() > 0:
-        moving_accelerating_turning = while_moving_accelerating_and_turning[:, 6]
+        moving_accelerating_turning = while_moving_accelerating_and_turning[:, IX_SPEED_ACCELERATION_TURNS]
         moving_accelerating_turning_stats.append(moving_accelerating_turning.mean())
         moving_accelerating_turning_stats.append(moving_accelerating_turning.std())
 
@@ -244,7 +243,7 @@ def calculate_features(transformed_data, trip):
         
     moving_decelerating_turning_stats = []
     if is_moving_decelerating_and_turning.sum() > 0:
-        moving_decelerating_turning = while_moving_decelerating_and_turning[:, 6]
+        moving_decelerating_turning = while_moving_decelerating_and_turning[:, IX_SPEED_ACCELERATION_TURNS]
         moving_decelerating_turning_stats.append(moving_decelerating_turning.mean())
         moving_decelerating_turning_stats.append(moving_decelerating_turning.std())
 
@@ -272,7 +271,8 @@ def calculate_features(transformed_data, trip):
                               moving_accelerating_turning_stats,
                               moving_decelerating_turning_stats))
 
-    if new_features.size < 58:
+    EXPECTED_NUMBER_OF_COLUMNS = 58
+    if new_features.size < EXPECTED_NUMBER_OF_COLUMNS:
         print("why?")
 
     return new_features
