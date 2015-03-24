@@ -3,7 +3,7 @@ __author__ = 'nikosteinhoff'
 import numpy as np
 from src import feature_extraction
 from src.boxcox_transformer import BoxCoxTransformer
-import src.model_specifications
+import src.model_specifications as model_specs
 from sklearn import preprocessing
 from sklearn import cross_validation
 from matplotlib.backends.backend_pdf import PdfPages
@@ -34,7 +34,7 @@ def classify_data(data):
     x, y, trip_id = split_data_target_id(data)
 
     use_boxcox_transform = False
-    models = src.model_specifications.models
+    models = model_specs.models
 
     kf = cross_validation.StratifiedKFold(y, n_folds=5, random_state=123)
     for train_index, test_index in kf:
@@ -117,6 +117,6 @@ def explore_data(data):
 
 
 if __name__ == '__main__':
-    data = feature_extraction.build_data_set(1, False)
-    print(classify_data(data))
+    for i in calculate_driver(1, False):
+        print(i)
     print("Done!")
