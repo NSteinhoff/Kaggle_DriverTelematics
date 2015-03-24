@@ -5,6 +5,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import seaborn as sns
 
 driver = 1
 trips = 200
@@ -46,13 +47,13 @@ def init():
     return lines
 
 
+global_x_max = 100
+global_x_min = -100
+global_y_max = 100
+global_y_min = -100
+
+
 # animation function.  This is called sequentially
-global_x_max = 1
-global_x_min = -1
-global_y_max = 1
-global_y_min = -1
-
-
 def animate(i):
     global global_x_min
     global global_x_max
@@ -107,8 +108,8 @@ def animate(i):
 anim = animation.FuncAnimation(fig, animate, init_func=init,
                                frames=frames_to_show, interval=1)
 
-# anim.save('driver_plot.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
-plt.show()
+anim.save('driver_plot_seaborn.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+# plt.show()
 
 if __name__ == '__main__':
     print("Running as main.")
