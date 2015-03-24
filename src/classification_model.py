@@ -115,6 +115,7 @@ def explore_data(data):
     pp.close()
     return
 
+
 if __name__ == '__main__':
     data = feature_extraction.build_data_set(1, False)
     print(classify_data(data))
