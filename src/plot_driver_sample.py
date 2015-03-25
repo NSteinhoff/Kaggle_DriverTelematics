@@ -1,5 +1,6 @@
 __author__ = 'nikosteinhoff'
 
+import sys
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -21,4 +22,8 @@ ax.tick_params(
     labelleft='off')
 ax.set_title('Real and fake trips')
 
-plt.savefig('driver_sample.png')
+if len(sys.argv) > 1 and sys.argv[1] == 'noshow':
+    print("Not showing plot! Saved to file.")
+    plt.savefig('driver_sample.png')
+else:
+    plt.show()

@@ -15,6 +15,7 @@ class BoxCoxTransformer():
         data = np.absolute(data) + self.shift
         for i in range(data.shape[1]):
             column = data[:, i]
+            # noinspection PyArgumentList
             trans, l = stats.boxcox(column/column.mean())
             self.lambdas.append(l)
 

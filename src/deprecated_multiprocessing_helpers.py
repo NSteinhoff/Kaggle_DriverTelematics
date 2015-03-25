@@ -8,13 +8,13 @@ import queue
 
 class ProcessManager:
     def __init__(self, function, function_args=()):
-            self.function = function
-            self.function_args = function_args
-            self.processes = []
-            self.in_queue = Queue()
-            self.out_queue = Queue()
-            self.cores = multiprocessing.cpu_count()
-            print("\n{0} CPU cores available ---> will spawn {1} child processes.\n".format(self.cores, self.cores-1))
+        self.function = function
+        self.function_args = function_args
+        self.processes = []
+        self.in_queue = Queue()
+        self.out_queue = Queue()
+        self.cores = multiprocessing.cpu_count()
+        print("\n{0} CPU cores available ---> will spawn {1} child processes.\n".format(self.cores, self.cores - 1))
 
     def start_processing(self):
         process_args = (self.function, self.in_queue, self.out_queue)
@@ -31,7 +31,7 @@ class ProcessManager:
 
         for process in self.processes:
             process.join()
-            
+
 
     def run_function(self, function, in_queue, out_queue, *args):
 
@@ -52,6 +52,7 @@ class ProcessManager:
 
         print("run_function done!")
         return
+
 
 def test_manager():
     values = range(10)

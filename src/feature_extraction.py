@@ -11,7 +11,7 @@ from copy import deepcopy
 
 
 def build_data_set(driver, rebuild_dataset):
-    path = os.path.join(file_handling._data_directory, 'drivers', str(driver), 'data_set.csv')
+    path = os.path.join(file_handling.base_data_directory, 'drivers', str(driver), 'data_set.csv')
 
     if rebuild_dataset or not os.path.isfile(path):
         driver_data = build_driver_data(driver)
@@ -67,7 +67,7 @@ def build_reference_data(n_drivers=200, n_trips=1, exclude=None):
 
 
 def calculate_features(transformed_data, trip):
-    ### Indices:
+    # Indices:
     IX_SPEED = 0
     IX_SPEED_CHANGES = 1
     IX_TURNS = 2
@@ -403,7 +403,6 @@ def transform_data(raw_data, plot=False):
     ix_speed_acc = 8
     ix_acc_turns = 9
     ix_speed_acc_turns = 10
-
 
     # Index: speed = 4; acceleration = 5; turns = 6; speed*turns = 7; speed * acceleration = 8; acceleration * turns = 9
     transformed_data = np.copy(temp_data[:, 4:])

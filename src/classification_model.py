@@ -4,6 +4,7 @@ import numpy as np
 from src import feature_extraction
 from src.boxcox_transformer import BoxCoxTransformer
 import src.model_specifications as model_specs
+from src.model_specifications import Model
 from sklearn import preprocessing
 from sklearn import cross_validation
 from matplotlib.backends.backend_pdf import PdfPages
@@ -34,7 +35,10 @@ def classify_data(data):
     x, y, trip_id = split_data_target_id(data)
 
     use_boxcox_transform = False
-    models = model_specs.models
+
+    models = {}
+    for name, model in model_specs.model_specifications.items():
+        models[name] = Model(model, name)
 
     kf = cross_validation.StratifiedKFold(y, n_folds=5, random_state=123)
     for train_index, test_index in kf:

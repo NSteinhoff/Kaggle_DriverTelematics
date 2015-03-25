@@ -45,7 +45,7 @@ class Model:
 
 
 # Model specifications
-_model_specifications = {
+model_specifications = {
     # 'logistic_no_intercept': logistic.LogisticRegression(fit_intercept=False),
     # 'pca_logistic_no_intercept': pipeline.make_pipeline(
     #     PCA(n_components='mle'),
@@ -105,6 +105,3 @@ _model_specifications = {
     # )
 }
 
-models = {}
-for _name, _model in _model_specifications.items():
-    models[_name] = Model(_model, _name)

@@ -41,7 +41,7 @@ def create_file_with_header(driver, header):
         print("Finished creating file {0}".format(path))
 
 
-def get_trip_summaries(driver=1, trip=1, all = False):
+def get_trip_summaries(driver=1, trip=1, all=False):
     # Trip data import
 
     folder = '/Volumes/DATA/Data/Kaggle/AxaDriverTelematics/drivers/{0}/'.format(driver)
@@ -82,7 +82,7 @@ def get_trip_summaries(driver=1, trip=1, all = False):
 
         for i in range(1, data.shape[0]):
             current_vector = [data.iloc[i, index_change_x], data.iloc[i, index_change_y]]
-            previous_vector = [data.iloc[i-1, index_change_x], data.iloc[i-1, index_change_y]]
+            previous_vector = [data.iloc[i - 1, index_change_x], data.iloc[i - 1, index_change_y]]
             data.iloc[i, index_direction_change] = radiants_between(current_vector, previous_vector)
 
         data['speed_X_acceleration'] = data.speed * data.acceleration
@@ -100,7 +100,7 @@ def get_trip_summaries(driver=1, trip=1, all = False):
 
         # Summarizing trip
         means = data.loc[:, 'speed':].mean()
-        std  = data.loc[:, 'speed':].std()
+        std = data.loc[:, 'speed':].std()
 
         # Extend column names
         new_index_mean = []
@@ -124,7 +124,7 @@ def get_trip_summaries(driver=1, trip=1, all = False):
         summary_columns = ['driver', 'trip']
         summary_columns.extend(means.index.tolist())
         summary_columns.extend(std.index.tolist())
-        summary = pd.DataFrame(columns = summary_columns)
+        summary = pd.DataFrame(columns=summary_columns)
 
         # Add trip stats
         summary.loc[trip] = summary_row

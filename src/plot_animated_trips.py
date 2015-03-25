@@ -1,6 +1,7 @@
 __author__ = 'nikosteinhoff'
 
 import os
+import sys
 import math
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,7 +9,7 @@ import matplotlib.animation as animation
 import seaborn as sns
 
 driver = 1
-trips = 200
+trips = 5
 
 data_folder = '/Users/nikosteinhoff/Data/Kaggle/AxaDriverTelematics/drivers'
 
@@ -16,14 +17,14 @@ total_frames = 0
 trip_readings = []
 trip_data = []
 for trip in range(1, trips + 1):
-    path = os.path.join(data_folder, str(driver), str(trip)+'.csv')
+    path = os.path.join(data_folder, str(driver), str(trip) + '.csv')
     data = np.genfromtxt(path, dtype=float, delimiter=',', skip_header=True)
     trip_data.append(data)
     total_frames += data.shape[0]
     trip_readings.append(data.shape[0])
 
 speed_factor = 20
-frames_to_show = int(math.floor(total_frames/speed_factor))
+frames_to_show = int(math.floor(total_frames / speed_factor))
 
 cum_trip_readings = np.array(trip_readings).cumsum().tolist()
 
@@ -69,14 +70,14 @@ def animate(i):
 
     cycle = i * speed_factor
 
-    trip = sum([cycle > x-1 for x in cum_trip_readings])
+    trip = sum([cycle > x - 1 for x in cum_trip_readings])
     subtract_rows = [0] + cum_trip_readings
     rows = cycle - subtract_rows[trip]
 
     x = trip_data[trip][:rows, 0]
     y = trip_data[trip][:rows, 1]
     lines[trip].set_data(x, y)
-    lines[trip].set_data(x+10, y+10)
+    lines[trip].set_data(x + 10, y + 10)
 
     if rows > 0:
         x_min = x.min()
@@ -104,12 +105,15 @@ def animate(i):
     return lines
 
 
-# call the animator.
-anim = animation.FuncAnimation(fig, animate, init_func=init,
-                               frames=frames_to_show, interval=1)
+if len(sys.argv) > 1 and sys.argv[1] == 'noshow':
+    print("Not showing plot!")
+else:
+    # call the animator.
+    anim = animation.FuncAnimation(fig, animate, init_func=init,
+                                   frames=frames_to_show, interval=1)
+    plt.show()
 
-anim.save('driver_plot_seaborn.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
-# plt.show()
+# anim.save('driver_plot_seaborn.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
 
 if __name__ == '__main__':
     print("Running as main.")

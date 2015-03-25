@@ -5,20 +5,20 @@ import os
 import time
 
 # Global vars:
-_data_directories = ['/Users/nikosteinhoff/Data/Kaggle/AxaDriverTelematics',
+base_data_directories = ['/Users/nikosteinhoff/Data/Kaggle/AxaDriverTelematics',
                      '/home/nikosteinhoff/Data/Kaggle/AxaDriverTelematics']
-_data_directory = ""
-for directory in _data_directories:
+base_data_directory = ""
+for directory in base_data_directories:
     if os.path.isdir(directory):
-        _data_directory = directory
-print(_data_directory)
+        base_data_directory = directory
+print(base_data_directory)
 
 file_creation_time = time.time()
 
 
 def get_drivers(data_directory=None):
     if not data_directory:
-        data_directory = os.path.join(_data_directory, 'drivers')
+        data_directory = os.path.join(base_data_directory, 'drivers')
 
     drivers = [int(f) for f in os.listdir(data_directory) if os.path.isdir(os.path.join(data_directory, f))]
 
@@ -27,7 +27,7 @@ def get_drivers(data_directory=None):
 
 def get_trips(driver, data_directory=None):
     if not data_directory:
-        data_directory = os.path.join(_data_directory, 'drivers')
+        data_directory = os.path.join(base_data_directory, 'drivers')
 
     trip_directory = os.path.join(data_directory, str(driver))
 
@@ -40,7 +40,7 @@ def get_trips(driver, data_directory=None):
 
 def load_trip_data(driver, trip, data_directory=None):
     if not data_directory:
-        data_directory = os.path.join(_data_directory, 'drivers')
+        data_directory = os.path.join(base_data_directory, 'drivers')
 
     path = os.path.join(data_directory, str(driver), '{0}.csv'.format(trip))
 
@@ -51,7 +51,7 @@ def load_trip_data(driver, trip, data_directory=None):
 
 def write_to_submission_file(line, overwrite=False, test=False, data_directory=None):
     if not data_directory:
-        data_directory = _data_directory
+        data_directory = base_data_directory
 
     if test:
         file_path = os.path.join(data_directory, 'submission_file_test.csv')
@@ -69,7 +69,7 @@ def write_to_submission_file(line, overwrite=False, test=False, data_directory=N
 
 def write_to_model_stats_file(line, overwrite=False, test=False, data_directory=None):
     if not data_directory:
-        data_directory = _data_directory
+        data_directory = base_data_directory
 
     if test:
         file_path = os.path.join(data_directory, 'model_stats_test.csv')
