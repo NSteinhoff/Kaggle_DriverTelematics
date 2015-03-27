@@ -7,7 +7,7 @@ from src import classification_model
 import multiprocessing
 from multiprocessing import Pool
 from functools import partial
-
+from copy import deepcopy
 import time
 
 
@@ -41,7 +41,7 @@ def aggregate_model_results(models, aggregate):
             aggregate[model.name].scores.extend(model.scores)
             aggregate[model.name].count += model.count
         else:
-            aggregate[model.name] = model
+            aggregate[model.name] = deepcopy(model)
 
 
 def summarize_model_statistics(results, test=False):
@@ -86,8 +86,10 @@ def main(test=False, rebuild_dataset=False):
 
     total_time = time.time()-start_time
     print("\n+-----------------+")
-    print("Total time for {0} drivers   -----> {1:.1f}  sec".format(len(drivers), total_time))
-    print("Per driver                 -----> {0:.1f} sec".format(total_time/len(drivers)))
+    print("{0:<40}   ----->   {1:>6} seconds".format("Total time for {0} drivers".format(len(drivers)),
+                                                     "{0:.1f}".format(total_time)))
+    print("{0:<40}   ----->   {1:>6} seconds".format("Per driver".format(len(drivers)),
+                                                     "{0:.1f}".format(total_time/len(drivers))))
     print("+-----------------+")
 
 
