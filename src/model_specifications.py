@@ -46,62 +46,52 @@ class Model:
 
 # Model specifications
 model_specifications = {
-    # 'logistic_no_intercept': logistic.LogisticRegression(fit_intercept=False),
-    # 'pca_logistic_no_intercept': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     logistic.LogisticRegression(fit_intercept=False)
-    # ),
-    #
-    # 'nearest_5_neighbors_dist': neighbors.KNeighborsClassifier(n_neighbors=5, weights='distance'),
-    # 'pca_nearest_5_neighbors_dist': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     neighbors.KNeighborsClassifier(n_neighbors=5, weights='distance')
-    # ),
-    #
-    # 'random_forest': ensemble.RandomForestClassifier(n_estimators=50),
-    # 'pca_random_forest': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     ensemble.RandomForestClassifier(n_estimators=50)
-    # ),
-    #
-    # 'gradient_boosting': ensemble.GradientBoostingClassifier(),
-    # 'pca_gradient_boosting': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     ensemble.GradientBoostingClassifier()
-    # ),
-    #
-    'gradient_boosting_stochastic': ensemble.GradientBoostingClassifier(subsample=0.8)
-    # 'pca_gradient_boosting_stochastic': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     ensemble.GradientBoostingClassifier(subsample=0.8)
-    # ),
-    #
-    # 'ada_boost_tree': ensemble.AdaBoostClassifier(),
-    # 'pca_ada_boost_tree': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     ensemble.AdaBoostClassifier()
-    # ),
-    #
-    # 'SVC_rbf_c2': SVC(C=2, kernel='rbf', probability=True),
-    # 'pca_SVC_rbf_c2': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     SVC(C=2, kernel='rbf', probability=True)
-    # ),
-    # 'SVC_rbf': SVC(kernel='rbf', probability=True),
-    # 'pca_SVC_rbf': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     SVC(kernel='rbf', probability=True)
-    # ),
-    # 'SVC_rbf_c4': SVC(C=4, kernel='rbf', probability=True),
-    # 'pca_SVC_rbf_c4': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     SVC(C=4, kernel='rbf', probability=True)
-    # ),
-    #
-    # 'naive_bayes_gaussian': naive_bayes.GaussianNB(),
-    # 'pca_naive_bayes_gaussian': pipeline.make_pipeline(
-    #     PCA(n_components='mle'),
-    #     naive_bayes.GaussianNB(),
-    # )
+    'logistic_no_intercept': logistic.LogisticRegression(fit_intercept=False),
+    'pca_logistic_no_intercept': pipeline.make_pipeline(
+        PCA(n_components='mle'),
+        logistic.LogisticRegression(fit_intercept=False)
+    ),
+
+    'nearest_5_neighbors_dist': neighbors.KNeighborsClassifier(n_neighbors=5, weights='distance'),
+    'pca_nearest_5_neighbors_dist': pipeline.make_pipeline(
+        PCA(n_components='mle'),
+        neighbors.KNeighborsClassifier(n_neighbors=5, weights='distance')
+    ),
+
+    'random_forest': ensemble.RandomForestClassifier(n_estimators=50),
+    'pca_random_forest': pipeline.make_pipeline(
+        PCA(n_components='mle'),
+        ensemble.RandomForestClassifier(n_estimators=50)
+    ),
+
+    'gradient_boosting': ensemble.GradientBoostingClassifier(),
+    'pca_gradient_boosting': pipeline.make_pipeline(
+        PCA(n_components='mle'),
+        ensemble.GradientBoostingClassifier()
+    ),
+
+    'gradient_boosting_stochastic': ensemble.GradientBoostingClassifier(subsample=0.8),
+    'pca_gradient_boosting_stochastic': pipeline.make_pipeline(
+        PCA(n_components='mle'),
+        ensemble.GradientBoostingClassifier(subsample=0.8)
+    ),
+
+    'ada_boost_tree': ensemble.AdaBoostClassifier(),
+    'pca_ada_boost_tree': pipeline.make_pipeline(
+        PCA(n_components='mle'),
+        ensemble.AdaBoostClassifier()
+    ),
+
+    'SVC_rbf': SVC(kernel='rbf', probability=True),
+    'pca_SVC_rbf': pipeline.make_pipeline(
+        PCA(n_components='mle'),
+        SVC(kernel='rbf', probability=True)
+    ),
+
+    'naive_bayes_gaussian': naive_bayes.GaussianNB(),
+    'pca_naive_bayes_gaussian': pipeline.make_pipeline(
+        PCA(n_components='mle'),
+        naive_bayes.GaussianNB(),
+    )
 }
 
